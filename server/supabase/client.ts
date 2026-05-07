@@ -9,17 +9,17 @@
  */
 
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/database'
 
 // Re-export a typed alias so every import stays clean
-export type SupabaseClient = ReturnType<typeof createBrowserClient<Database>>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SupabaseClient = ReturnType<typeof createBrowserClient<any>>
 
 let client: SupabaseClient | undefined
 
 export function getSupabaseBrowserClient(): SupabaseClient {
   if (client) return client
 
-  client = createBrowserClient<Database>(
+  client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )

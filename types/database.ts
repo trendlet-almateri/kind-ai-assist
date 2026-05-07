@@ -185,3 +185,4 @@ export interface ConversationWithLastMessage extends Conversation {
 export interface AgentActivity extends AgentProfile {
   assigned_count: number
 }
+

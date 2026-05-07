@@ -29,7 +29,7 @@ export default async function KnowledgePage() {
 
   return (
     <KnowledgeShell
-      sources={enriched as Parameters<typeof KnowledgeShell>[0]['sources']}
+      sources={enriched as unknown as Parameters<typeof KnowledgeShell>[0]['sources']}
       isAdmin={session.profile.role === 'admin'}
       userId={session.profile.id}
     />

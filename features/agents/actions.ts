@@ -8,7 +8,7 @@ import type { ActionState, AgentRole, AgentStatus } from '@/types'
 
 // ── Invite agent ─────────────────────────────────────────────────────────────
 export async function inviteAgentAction(
-  _prev: ActionState,
+  _prev: ActionState<{ agentId: string }>,
   formData: FormData
 ): Promise<ActionState<{ agentId: string }>> {
   const session = await getServerSession()
