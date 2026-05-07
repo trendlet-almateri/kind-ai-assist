@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background: #151412 → warm espresso */
+    --background: 30 10% 8%;
+    --foreground: 38 14% 88%;
+
+    /* Card Surface: #1F1D1A */
+    --card: 30 10% 11%;
+    --card-foreground: 38 14% 88%;
+
+    --popover: 30 10% 11%;
+    --popover-foreground: 38 14% 88%;
+
+    /* Primary Accent: #3ECFB2 (softer teal) */
+    --primary: 164 56% 53%;
+    --primary-foreground: 30 10% 8%;
+
+    /* Secondary: slightly lighter warm surface */
+    --secondary: 30 8% 10%;
+    --secondary-foreground: 38 14% 88%;
+
+    --muted: 30 8% 15%;
+    /* Secondary Text: #8A8578 */
+    --muted-foreground: 35 8% 50%;
+
+    --accent: 30 8% 13%;
+    --accent-foreground: 38 14% 88%;
+
+    /* Alert: #C0604A (deep coral) */
+    --destructive: 11 47% 52%;
+    --destructive-foreground: 38 14% 95%;
+
+    /* Success: #4CAF82 (muted green) */
+    --success: 152 38% 49%;
+    --success-foreground: 38 14% 95%;
+
+    /* Warning: #F7B731 (amber) */
+    --warning: 40 93% 58%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Border: #2D2A26 */
+    --border: 30 10% 16%;
+    --input: 30 8% 13%;
+    --ring: 164 56% 53%;
+
+    --radius: 0.75rem;
+
+    --surface: 30 10% 11%;
+    --surface-raised: 30 8% 15%;
+
+    /* Sidebar: #1A1816 */
+    --sidebar-background: 30 8% 9%;
+    --sidebar-foreground: 38 14% 88%;
+    --sidebar-primary: 164 56% 53%;
+    --sidebar-primary-foreground: 30 10% 8%;
+    --sidebar-accent: 30 8% 13%;
+    --sidebar-accent-foreground: 38 14% 88%;
+    --sidebar-border: 30 10% 16%;
+    --sidebar-ring: 164 56% 53%;
+
+    /* Active nav highlight */
+    --nav-active: 168 25% 14%;
+
+    /* Metadata color: #5A564E */
+    --metadata: 30 8% 33%;
+
+    /* Chart blue: #5B8DEF */
+    --chart-blue: 220 81% 65%;
+
+    /* Chat bubble colors */
+    --bubble-customer: 30 10% 14%;
+    --bubble-customer-border: 30 10% 20%;
+    --bubble-bot: 164 30% 14%;
+    --bubble-bot-border: 164 56% 25%;
+    --bubble-agent: 38 55% 13%;
+    --bubble-agent-border: 40 60% 28%;
+
+    /* Opacity tokens */
+    --text-primary: 1;
+    --text-secondary: 0.7;
+    --text-tertiary: 0.45;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  /* Subtle film-grain noise overlay — premium feel */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  /* Slim custom scrollbar */
+  *::-webkit-scrollbar { width: 5px; height: 5px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  h1, h2, h3, h4, h5, h6 { @apply font-heading; }
+  code, pre, kbd { @apply font-mono; }
+}
+
+@layer components {
+  /* Glass card — dashboard widgets */
+  .glass-card {
+    @apply rounded-2xl border border-border shadow-lg;
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.02),
+      0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  /* Stat card with hover teal glow */
+  .stat-card {
+    @apply glass-card p-6 transition-all duration-300 hover:border-primary/30;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .stat-card:hover {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 20px -6px hsl(var(--primary) / 0.12);
+  }
+
+  /* Agent-view card — cleaner, no blur */
+  .agent-card {
+    @apply rounded-xl border border-border bg-card p-4 transition-colors duration-150;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  /* Sidebar nav items */
+  .nav-item {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200;
+    color: hsl(var(--foreground) / 0.6);
+  }
+  .nav-item:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--foreground) / 0.85);
+  }
+  .nav-item-active {
+    background: hsl(var(--nav-active)) !important;
+    color: hsl(var(--primary)) !important;
+    border-left: 3px solid hsl(var(--primary));
+  }
+
+  /* Badges */
+  .badge-glow { @apply rounded-full px-3 py-1 text-xs font-semibold tracking-wide; }
+  .badge-primary   { @apply badge-glow bg-primary/15 text-primary; }
+  .badge-success   { @apply badge-glow bg-success/15 text-success; }
+  .badge-warning   { @apply badge-glow bg-warning/15 text-warning; }
+  .badge-danger    { @apply badge-glow bg-destructive/15 text-destructive; }
+
+  /* Skeleton pulse */
+  .skeleton-pulse { @apply animate-pulse rounded-xl bg-muted/60; }
+
+  /* Teal left border accent */
+  .teal-accent-left { border-left: 3px solid hsl(var(--primary)); }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-[hsl(164,40%,68%)] bg-clip-text text-transparent;
+  }
+
+  /* Chat window background */
+  .chat-pattern-bg {
+    background:
+      radial-gradient(ellipse 120% 80% at 50% 0%, hsl(164 30% 8% / 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 60% at 50% 100%, hsl(164 40% 6% / 0.3) 0%, transparent 45%),
+      radial-gradient(circle at 20% 30%, hsl(30 20% 6% / 0.5) 0%, transparent 35%),
+      radial-gradient(circle at 80% 70%, hsl(30 15% 5% / 0.4) 0%, transparent 40%),
+      linear-gradient(180deg, hsl(30 12% 6%) 0%, hsl(30 8% 4%) 100%);
+    background-attachment: fixed;
+  }
+
+  .teal-glow { box-shadow: 0 0 16px -4px hsl(var(--primary) / 0.15); }
+
+  .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .custom-scrollbar { scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent; }
+}
