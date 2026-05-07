@@ -5,6 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+
+export const maxDuration = 15
 import { getServerSession, createSupabaseServerClient } from '@/server/supabase/server'
 import { sendWhatsAppMessage } from '@/server/whatsapp/client'
 

@@ -27,6 +27,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+
+export const maxDuration = 30
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import { generateAndSendReply } from '@/server/ai/replyEngine'
 import { markMessageAsRead } from '@/server/whatsapp/client'
