@@ -30,7 +30,7 @@ export function LoginForm() {
       </div>
 
       {/* Form */}
-      <form action={formAction} className="glass-card space-y-4 p-6">
+      <form action={formAction} className="glass-card space-y-5 p-6">
         {/* Error banner */}
         {state?.error && (
           <motion.div
@@ -113,9 +113,6 @@ export function LoginForm() {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-muted-foreground">
-        Contact your administrator to get access.
-      </p>
     </motion.div>
   )
 }
