@@ -86,42 +86,64 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
     [updateConversation]
   )
 
+  const handleSelect = useCallback((id: string | null) => {
+    setSelectedId(id)
+  }, [])
+
+  // On mobile: show list when nothing selected, show chat when selected
+  const showList = !selectedId
+  const showChat = !!selectedId
+
   return (
-    <div className="flex h-screen font-agent">
-      {/* Panel 1 — Conversation list */}
-      <ConversationList
-        conversations={filtered}
-        lastMessages={lastMessages}
-        isLoading={convLoading}
-        selectedId={selectedId}
-        filter={filter}
-        onSelect={setSelectedId}
-        onFilterChange={setFilter}
-        search={search}
-        onSearch={setSearch}
-      />
+    <div className="flex h-screen font-agent pt-14 lg:pt-0">
+      {/* Panel 1 — Conversation list (full width on mobile when no convo selected) */}
+      <div className={`${showList ? 'flex' : 'hidden'} lg:flex w-full lg:w-auto flex-col`}>
+        <ConversationList
+          conversations={filtered}
+          lastMessages={lastMessages}
+          isLoading={convLoading}
+          selectedId={selectedId}
+          filter={filter}
+          onSelect={handleSelect}
+          onFilterChange={setFilter}
+          search={search}
+          onSearch={setSearch}
+        />
+      </div>
 
-      {/* Panel 2 — Chat window */}
-      <ChatWindow
-        messages={messages}
-        isLoading={msgLoading}
-        isAiActive={selectedConv?.is_ai_active ?? true}
-        isSending={isSending}
-        onSend={handleSend}
-        conversationId={selectedId}
-      />
+      {/* Panel 2 + 3 — Chat + details (full width on mobile when convo selected) */}
+      <div className={`${showChat ? 'flex' : 'hidden'} lg:flex flex-1 flex-col lg:flex-row min-w-0`}>
+        {/* Back button on mobile */}
+        <button
+          onClick={() => setSelectedId(null)}
+          className="lg:hidden flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground border-b border-border/50 bg-card shrink-0"
+        >
+          ← Back to conversations
+        </button>
 
-      {/* Panel 3 — Conversation details */}
-      <ConversationDetails
-        conversation={selectedConv}
-        takeoverEvents={takeoverEvents}
-        agents={agents}
-        agentId={profile.id}
-        aiEnabled={aiEnabled}
-        isAdmin={profile.role === 'admin'}
-        onToggleAI={toggleAI}
-        onUpdateConversation={handleUpdateConversation}
-      />
+        <ChatWindow
+          messages={messages}
+          isLoading={msgLoading}
+          isAiActive={selectedConv?.is_ai_active ?? true}
+          isSending={isSending}
+          onSend={handleSend}
+          conversationId={selectedId}
+        />
+
+        {/* Details panel hidden on mobile to save space */}
+        <div className="hidden lg:block">
+          <ConversationDetails
+            conversation={selectedConv}
+            takeoverEvents={takeoverEvents}
+            agents={agents}
+            agentId={profile.id}
+            aiEnabled={aiEnabled}
+            isAdmin={profile.role === 'admin'}
+            onToggleAI={toggleAI}
+            onUpdateConversation={handleUpdateConversation}
+          />
+        </div>
+      </div>
     </div>
   )
 }

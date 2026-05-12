@@ -63,7 +63,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
   }
 
   return (
-    <div className="p-6 space-y-6 font-agent">
+    <div className="p-4 pt-16 lg:p-6 lg:pt-6 space-y-6 font-agent">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

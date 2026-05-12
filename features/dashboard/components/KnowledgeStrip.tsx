@@ -18,11 +18,11 @@ export function KnowledgeStrip({ counts }: { counts: KnowledgeCounts }) {
 
   return (
     <div className="glass-card p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-4">
           {stats.map((s) => (
             <div key={s.label} className="flex items-center gap-2">
-              <s.icon className={`h-4 w-4 ${s.color}`} />
+              <s.icon className={`h-4 w-4 shrink-0 ${s.color}`} />
               <span className={`font-semibold text-sm ${s.color}`}>{s.value}</span>
               <span className="text-xs text-muted-foreground">{s.label}</span>
             </div>
@@ -30,7 +30,7 @@ export function KnowledgeStrip({ counts }: { counts: KnowledgeCounts }) {
         </div>
         <Link
           href="/knowledge"
-          className="text-xs text-primary hover:text-primary/80 transition-colors"
+          className="text-xs text-primary hover:text-primary/80 transition-colors shrink-0"
         >
           Manage →
         </Link>
