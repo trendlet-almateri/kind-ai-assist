@@ -62,27 +62,6 @@ export function LoginForm() {
                 </div>
               </div>
 
-              {/* Escalated badge — floats top-left */}
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0, y: [0, -4, 0] }}
-                transition={{ opacity: { delay: 0.3, duration: 0.5 }, y: { duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 } }}
-                className="absolute -top-3 -left-4 flex items-center gap-1.5 rounded-full border border-warning/30 bg-[hsl(30_8%_10%)] px-3 py-1 shadow-lg"
-              >
-                <div className="h-1.5 w-1.5 rounded-full bg-warning animate-pulse" />
-                <span className="text-xs font-medium text-warning">Escalated</span>
-              </motion.div>
-
-              {/* AI Active badge — floats bottom-right */}
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0, y: [0, 4, 0] }}
-                transition={{ opacity: { delay: 0.6, duration: 0.5 }, y: { duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 } }}
-                className="absolute -bottom-3 -right-4 flex items-center gap-1.5 rounded-full border border-primary/30 bg-[hsl(30_8%_10%)] px-3 py-1 shadow-lg"
-              >
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-primary">AI Active</span>
-              </motion.div>
             </div>
           </motion.div>
 
