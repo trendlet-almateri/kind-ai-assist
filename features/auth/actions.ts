@@ -35,11 +35,10 @@ export async function loginAction(
   })
 
   if (error) {
-    console.error('[login] auth error:', { message: error.message, code: (error as any).code, status: error.status })
     if (error.message.includes('Invalid login credentials')) {
       return { error: 'Invalid email or password' }
     }
-    return { error: `${error.message} (code: ${(error as any).code}, status: ${error.status})` }
+    return { error: 'Sign in failed. Please try again.' }
   }
 
   if (!data.user) {
