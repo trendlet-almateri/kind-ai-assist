@@ -197,3 +197,56 @@ export function SettingsSkeleton() {
     </div>
   )
 }
+
+// ── Inbox Skeleton ───────────────────────────────────────────
+export function InboxSkeleton() {
+  return (
+    <div className="flex h-screen font-agent pt-14 lg:pt-0">
+      {/* Conversation list panel */}
+      <div className="flex w-full lg:w-80 flex-col border-r border-border/50 bg-card">
+        <div className="p-4 border-b border-border/50 space-y-3">
+          <Skeleton className="h-9 w-full rounded-xl" />
+          <div className="flex gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-7 w-16 rounded-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 divide-y divide-border/30 overflow-hidden">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3">
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-2.5 w-10" />
+                </div>
+                <Skeleton className="h-2.5 w-48" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Chat panel */}
+      <div className="hidden lg:flex flex-1 flex-col min-w-0">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border/50">
+          <Skeleton className="h-9 w-9 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-2.5 w-20" />
+          </div>
+        </div>
+        <div className="flex-1 p-5 space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+              <Skeleton className={`h-10 rounded-2xl ${i % 2 === 0 ? 'w-56' : 'w-44'}`} />
+            </div>
+          ))}
+        </div>
+        <div className="px-5 py-4 border-t border-border/50">
+          <Skeleton className="h-11 w-full rounded-2xl" />
+        </div>
+      </div>
+    </div>
+  )
+}
