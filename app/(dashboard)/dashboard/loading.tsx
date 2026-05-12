@@ -1,4 +1,4 @@
-import { DashboardSkeleton } from '@/components/shared/Skeletons'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 export default function DashboardLoading() {
-  return <DashboardSkeleton />
+  return <LogoLoader />
 }

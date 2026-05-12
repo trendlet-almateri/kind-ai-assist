@@ -1,4 +1,4 @@
-import { AgentsSkeleton } from '@/components/shared/Skeletons'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 export default function AgentsLoading() {
-  return <AgentsSkeleton />
+  return <LogoLoader />
 }

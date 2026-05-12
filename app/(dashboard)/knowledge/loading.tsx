@@ -1,4 +1,4 @@
-import { KnowledgeSkeleton } from '@/components/shared/Skeletons'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 export default function KnowledgeLoading() {
-  return <KnowledgeSkeleton />
+  return <LogoLoader />
 }

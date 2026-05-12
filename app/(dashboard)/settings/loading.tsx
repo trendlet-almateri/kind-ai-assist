@@ -1,4 +1,4 @@
-import { SettingsSkeleton } from '@/components/shared/Skeletons'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 export default function SettingsLoading() {
-  return <SettingsSkeleton />
+  return <LogoLoader />
 }

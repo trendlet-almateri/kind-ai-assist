@@ -1,4 +1,4 @@
-import { InboxSkeleton } from '@/components/shared/Skeletons'
+import { LogoLoader } from '@/components/shared/LogoLoader'
 export default function InboxLoading() {
-  return <InboxSkeleton />
+  return <LogoLoader />
 }
