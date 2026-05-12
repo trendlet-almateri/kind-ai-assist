@@ -188,13 +188,14 @@ export function LoginForm() {
               )}
             />
 
+            <div className="flex justify-center mt-2">
             <button
               type="submit"
               disabled={isPending}
               className={cn(
-                'w-full flex items-center justify-center gap-2',
+                'flex items-center justify-center gap-2',
                 'rounded-full bg-primary text-primary-foreground font-semibold text-sm',
-                'py-3.5 mt-2 transition-all duration-200',
+                'px-10 py-3.5 transition-all duration-200',
                 'hover:bg-primary/90 hover:shadow-[0_0_24px_hsl(var(--primary)/0.3)]',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
@@ -208,6 +209,7 @@ export function LoginForm() {
                 'Sign in'
               )}
             </button>
+            </div>
           </form>
         </motion.div>
       </div>
