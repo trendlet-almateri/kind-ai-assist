@@ -50,6 +50,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ profile, aiEnabled }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 
   const filteredNav = NAV_ITEMS.filter(
@@ -57,10 +58,29 @@ export function AppSidebar({ profile, aiEnabled }: AppSidebarProps) {
   )
 
   return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-40 flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-card text-muted-foreground lg:hidden"
+        aria-label="Open menu"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
     <motion.aside
       animate={{ width: collapsed ? 72 : 260 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border/50 bg-sidebar overflow-hidden"
+      className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-border/50 bg-sidebar overflow-hidden
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform lg:transition-none`}
     >
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex h-14 shrink-0 items-center justify-between px-4 border-b border-border/50">
@@ -96,6 +116,7 @@ export function AppSidebar({ profile, aiEnabled }: AppSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 'nav-item',
                 isActive && 'nav-item-active',
@@ -179,5 +200,6 @@ export function AppSidebar({ profile, aiEnabled }: AppSidebarProps) {
         </div>
       </div>
     </motion.aside>
+    </>
   )
 }

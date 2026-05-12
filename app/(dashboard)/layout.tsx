@@ -38,11 +38,8 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-background">
       <AppSidebar profile={session.profile} aiEnabled={aiEnabled} />
 
-      {/* Main content — offset by sidebar width via CSS var or padding */}
-      <main
-        className="flex-1 min-h-screen transition-all duration-200"
-        style={{ paddingLeft: '260px' }} // matches sidebar default width
-      >
+      {/* Main content — on mobile full width, on lg+ offset by sidebar */}
+      <main className="flex-1 min-h-screen transition-all duration-200 w-full lg:pl-[260px]">
         {children}
       </main>
     </div>
