@@ -78,7 +78,7 @@ export function StatusDonut({ data }: StatusDonutProps) {
           <Legend
             formatter={(value) => (
               <span style={{ color: 'hsl(35 8% 60%)', fontSize: 11 }}>
-                {value.charAt(0).toUpperCase() + value.slice(1)}
+                {value ? value.charAt(0).toUpperCase() + value.slice(1) : ''}
               </span>
             )}
           />
