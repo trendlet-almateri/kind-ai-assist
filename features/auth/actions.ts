@@ -35,11 +35,10 @@ export async function loginAction(
   })
 
   if (error) {
-    // Don't expose internal Supabase error messages to the client
     if (error.message.includes('Invalid login credentials')) {
       return { error: 'Invalid email or password' }
     }
-    return { error: 'Sign in failed. Please try again.' }
+    return { error: error.message }
   }
 
   if (!data.user) {
