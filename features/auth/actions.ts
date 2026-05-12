@@ -38,7 +38,7 @@ export async function loginAction(
     if (error.message.includes('Invalid login credentials')) {
       return { error: 'Invalid email or password' }
     }
-    return { error: 'Sign in failed. Please try again.' }
+    return { error: `DEBUG: ${error.message} | code: ${(error as any).code} | status: ${error.status}` }
   }
 
   if (!data.user) {
