@@ -50,18 +50,42 @@ export async function POST(req: NextRequest) {
   const params: Record<string, string> = {}
   for (const [k, v] of form.entries()) params[k] = v
 
-  // Twilio signs the *exact* URL it was configured with. NEXT_PUBLIC_APP_URL
-  // is the canonical production origin; fall back to the request's own origin
-  // for preview deployments / local dev.
-  const configuredOrigin =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? new URL(req.url).origin
-  const signedUrl = `${configuredOrigin}/api/webhooks/twilio`
+  // Twilio signs the *exact* URL it POSTed to. Behind Vercel's proxy,
+  // req.url is the internal URL — the public one is reconstructed from the
+  // x-forwarded-* headers Vercel sets. We also try a couple of fallbacks
+  // (NEXT_PUBLIC_APP_URL, req.url) because a single typo'd configured URL
+  // is the #1 cause of "invalid signature" with a correct auth token.
+  const fwdHost = req.headers.get('x-forwarded-host') ?? req.headers.get('host')
+  const fwdProto = req.headers.get('x-forwarded-proto') ?? 'https'
+  const candidateUrls = Array.from(
+    new Set(
+      [
+        fwdHost ? `${fwdProto}://${fwdHost}/api/webhooks/twilio` : null,
+        process.env.NEXT_PUBLIC_APP_URL
+          ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/webhooks/twilio`
+          : null,
+        (() => {
+          try {
+            return `${new URL(req.url).origin}/api/webhooks/twilio`
+          } catch {
+            return null
+          }
+        })(),
+      ].filter((u): u is string => !!u),
+    ),
+  )
 
   const signature = req.headers.get('x-twilio-signature')
-  if (!verifyTwilioSignature(signature, signedUrl, params)) {
+  const matchedUrl = candidateUrls.find((url) =>
+    verifyTwilioSignature(signature, url, params),
+  )
+
+  if (!matchedUrl) {
     console.warn('[Twilio Webhook] Signature verification failed', {
       hasSignature: !!signature,
-      signedUrl,
+      hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+      candidateUrls,
+      paramKeys: Object.keys(params),
       from: params.From,
     })
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 })
