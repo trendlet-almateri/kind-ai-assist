@@ -13,7 +13,7 @@
  * - Passing it as a prop avoids a duplicate DB call.
  */
 
-import { useState } from 'react'
+import { useState } from 'react' // mobileOpen only — collapsed lifted to DashboardShell
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -44,12 +44,13 @@ const NAV_ITEMS: NavItem[] = [
 const AGENT_PAGES = ['/inbox', '/agents', '/knowledge']
 
 interface AppSidebarProps {
-  profile: AgentProfile
-  aiEnabled: boolean
+  profile:    AgentProfile
+  aiEnabled:  boolean
+  collapsed:  boolean
+  onCollapse: (val: boolean) => void
 }
 
-export function AppSidebar({ profile, aiEnabled }: AppSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false)
+export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 
@@ -100,7 +101,7 @@ export function AppSidebar({ profile, aiEnabled }: AppSidebarProps) {
           )}
         </AnimatePresence>
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => onCollapse(!collapsed)}
           className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >

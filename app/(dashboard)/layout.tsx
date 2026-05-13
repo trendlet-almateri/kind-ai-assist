@@ -14,7 +14,7 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from '@/server/supabase/server'
 import { createSupabaseServerClient } from '@/server/supabase/server'
-import { AppSidebar } from '@/components/layout/AppSidebar'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 export default async function DashboardLayout({
   children,
@@ -35,13 +35,8 @@ export default async function DashboardLayout({
   const aiEnabled = settings?.ai_enabled ?? true
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar profile={session.profile} aiEnabled={aiEnabled} />
-
-      {/* Main content — on mobile full width, on lg+ offset by sidebar */}
-      <main className="flex-1 min-h-screen transition-all duration-200 w-full lg:pl-[260px]">
-        {children}
-      </main>
-    </div>
+    <DashboardShell profile={session.profile} aiEnabled={aiEnabled}>
+      {children}
+    </DashboardShell>
   )
 }
