@@ -24,11 +24,20 @@ import { getOpenAIClient } from './openai'
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import { sendWhatsAppMessage } from '@/server/whatsapp/client'
 
+/**
+ * A provider-agnostic "send a text reply to this customer" function.
+ * Meta and Twilio inbound webhooks each pass their own implementation so
+ * the reply goes back over the same channel it arrived on.
+ */
+type SendReplyFn = (to: string, message: string) => Promise<unknown>
+
 interface ReplyContext {
   conversationId: string
   customerPhone:  string
   customerName:   string | null
   workspaceId:    string
+  /** Defaults to the Meta sender for back-compat with the existing webhook. */
+  send?:          SendReplyFn
 }
 
 export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
@@ -122,8 +131,10 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     metadata:        {},
   })
 
-  // ── 7. Send via WhatsApp ───────────────────────────────────────────────────
-  await sendWhatsAppMessage(ctx.customerPhone, replyText, ctx.conversationId)
+  // ── 7. Send via WhatsApp (Meta by default, Twilio when the webhook passes it) ─
+  const send: SendReplyFn =
+    ctx.send ?? ((to, msg) => sendWhatsAppMessage(to, msg, ctx.conversationId))
+  await send(ctx.customerPhone, replyText)
 
   // ── 8. Check escalation keywords ──────────────────────────────────────────
   // The Postgres trigger handles this automatically on message insert,
