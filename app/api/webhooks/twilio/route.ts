@@ -105,10 +105,15 @@ export async function POST(req: NextRequest) {
   const fromPhone = stripWhatsAppPrefix(fromRaw)
   const toPhone = stripWhatsAppPrefix(toRaw)
 
-  // Process in background — keep the webhook response fast.
-  processInbound({ fromPhone, toPhone, messageText, messageSid, profileName, rawParams: params }).catch(
-    (err) => console.error('[Twilio Webhook] Processing error:', err),
-  )
+  // Await processing rather than fire-and-forget — on Vercel serverless the
+  // runtime can shut down once the response is sent, killing any background
+  // task mid-flight. Twilio gives us 15s, which is enough for DB writes +
+  // one OpenAI call. If we ever exceed that, switch to a queue.
+  try {
+    await processInbound({ fromPhone, toPhone, messageText, messageSid, profileName, rawParams: params })
+  } catch (err) {
+    console.error('[Twilio Webhook] Processing error:', err)
+  }
 
   return new NextResponse('', { status: 200 })
 }
@@ -122,10 +127,12 @@ async function processInbound(opts: {
   rawParams: Record<string, string>
 }): Promise<void> {
   const { fromPhone, toPhone, messageText, messageSid, profileName, rawParams } = opts
+  console.log('[Twilio Webhook] processInbound start', { fromPhone, messageSid })
+
   const db = getSupabaseAdminClient()
 
   // ── 1. Find or create conversation ──────────────────────────────────────
-  const { data: existingConv } = await db
+  const { data: existingConv, error: findErr } = await db
     .from('conversations')
     .select('id, is_ai_active, customer_name, workspace_id')
     .eq('customer_phone', fromPhone)
@@ -135,6 +142,11 @@ async function processInbound(opts: {
     .limit(1)
     .maybeSingle()
 
+  if (findErr) {
+    console.error('[Twilio Webhook] step1 find-conversation failed:', findErr)
+    return
+  }
+
   let conversationId: string
   let workspaceId: string
 
@@ -142,11 +154,20 @@ async function processInbound(opts: {
     conversationId = existingConv.id
     workspaceId = existingConv.workspace_id
     if (!existingConv.customer_name && profileName) {
-      await db.from('conversations').update({ customer_name: profileName }).eq('id', conversationId)
+      const { error: upErr } = await db
+        .from('conversations')
+        .update({ customer_name: profileName })
+        .eq('id', conversationId)
+      if (upErr) console.error('[Twilio Webhook] step1b update-customer-name failed:', upErr)
     }
+    console.log('[Twilio Webhook] step1 using existing conversation', { conversationId })
   } else {
-    const { data: workspace } = await db.from('workspaces').select('id').limit(1).single()
-    workspaceId = workspace?.id ?? 'default'
+    const { data: workspace, error: wsErr } = await db.from('workspaces').select('id').limit(1).single()
+    if (wsErr || !workspace) {
+      console.error('[Twilio Webhook] step1c workspace lookup failed:', wsErr)
+      return
+    }
+    workspaceId = workspace.id
 
     const { data: newConv, error: convError } = await db
       .from('conversations')
@@ -163,14 +184,15 @@ async function processInbound(opts: {
       .single()
 
     if (convError || !newConv) {
-      console.error('[Twilio Webhook] Failed to create conversation:', convError)
+      console.error('[Twilio Webhook] step1d insert-conversation failed:', convError)
       return
     }
     conversationId = newConv.id
+    console.log('[Twilio Webhook] step1 created new conversation', { conversationId, workspaceId })
   }
 
   // ── 2. Insert inbound message ───────────────────────────────────────────
-  await db.from('messages').insert({
+  const { error: msgErr } = await db.from('messages').insert({
     workspace_id: workspaceId,
     conversation_id: conversationId,
     role: 'user',
@@ -179,9 +201,14 @@ async function processInbound(opts: {
     is_read: false,
     metadata: { twilio_message_sid: messageSid },
   })
+  if (msgErr) {
+    console.error('[Twilio Webhook] step2 insert-message failed:', msgErr)
+    return
+  }
+  console.log('[Twilio Webhook] step2 inserted user message')
 
   // ── 3. Log raw payload ──────────────────────────────────────────────────
-  await db.from('twilio_messages').insert({
+  const { error: twErr } = await db.from('twilio_messages').insert({
     workspace_id: workspaceId,
     message_sid: messageSid,
     from_number: fromPhone,
@@ -192,13 +219,24 @@ async function processInbound(opts: {
     conversation_id: conversationId,
     raw_payload: rawParams as unknown as Record<string, unknown>,
   })
+  if (twErr) {
+    console.error('[Twilio Webhook] step3 insert-twilio_messages failed:', twErr)
+    // Non-fatal — keep going to reply
+  } else {
+    console.log('[Twilio Webhook] step3 logged raw payload')
+  }
 
   // ── 4. Trigger AI reply (only if is_ai_active — replyEngine checks this) ──
-  await generateAndSendReply({
-    conversationId,
-    customerPhone: fromPhone,
-    customerName: profileName,
-    workspaceId,
-    send: (to, msg) => sendTwilioWhatsAppMessage(to, msg),
-  })
+  try {
+    await generateAndSendReply({
+      conversationId,
+      customerPhone: fromPhone,
+      customerName: profileName,
+      workspaceId,
+      send: (to, msg) => sendTwilioWhatsAppMessage(to, msg),
+    })
+    console.log('[Twilio Webhook] step4 reply engine completed')
+  } catch (err) {
+    console.error('[Twilio Webhook] step4 reply engine failed:', err)
+  }
 }
