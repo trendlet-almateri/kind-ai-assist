@@ -5,18 +5,27 @@ export function LogoLoader() {
     <>
       <style>{`
         @keyframes figureEight {
-          0%    { transform: translate(0px,   0px);   }
-          12.5% { transform: translate(14px,  10px);  }
-          25%   { transform: translate(20px,  0px);   }
-          37.5% { transform: translate(14px, -10px);  }
-          50%   { transform: translate(0px,   0px);   }
-          62.5% { transform: translate(-14px, 10px);  }
-          75%   { transform: translate(-20px, 0px);   }
-          87.5% { transform: translate(-14px,-10px);  }
-          100%  { transform: translate(0px,   0px);   }
+          0%      { transform: translate3d(  0.00px,   0.00px, 0); }
+          6.25%   { transform: translate3d(  7.65px,   7.07px, 0); }
+          12.5%   { transform: translate3d( 14.14px,  10.00px, 0); }
+          18.75%  { transform: translate3d( 18.48px,   7.07px, 0); }
+          25%     { transform: translate3d( 20.00px,   0.00px, 0); }
+          31.25%  { transform: translate3d( 18.48px,  -7.07px, 0); }
+          37.5%   { transform: translate3d( 14.14px, -10.00px, 0); }
+          43.75%  { transform: translate3d(  7.65px,  -7.07px, 0); }
+          50%     { transform: translate3d(  0.00px,   0.00px, 0); }
+          56.25%  { transform: translate3d( -7.65px,   7.07px, 0); }
+          62.5%   { transform: translate3d(-14.14px,  10.00px, 0); }
+          68.75%  { transform: translate3d(-18.48px,   7.07px, 0); }
+          75%     { transform: translate3d(-20.00px,   0.00px, 0); }
+          81.25%  { transform: translate3d(-18.48px,  -7.07px, 0); }
+          87.5%   { transform: translate3d(-14.14px, -10.00px, 0); }
+          93.75%  { transform: translate3d( -7.65px,  -7.07px, 0); }
+          100%    { transform: translate3d(  0.00px,   0.00px, 0); }
         }
         .logo-figure-eight {
-          animation: figureEight 0.75s ease-in-out infinite;
+          will-change: transform;
+          animation: figureEight 0.75s linear infinite;
         }
       `}</style>
       <div className="flex h-screen w-full items-center justify-center bg-background">
