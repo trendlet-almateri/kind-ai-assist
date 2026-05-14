@@ -2,39 +2,38 @@
 
 /**
  * TitleGuard.tsx
- * Prevents Next.js from flashing "Loading..." in the browser tab.
- * Next.js App Router sets document.title = "Loading..." during route
- * transitions. This component watches for that and reverts it immediately.
+ * Blocks Next.js from ever setting the browser tab title to "Loading..."
+ * during route transitions.
+ *
+ * WHY Object.defineProperty instead of MutationObserver:
+ * MutationObserver fires asynchronously — the title flashes for one frame
+ * before the callback reverts it. Intercepting the setter is synchronous,
+ * so "Loading..." is blocked before it ever reaches the DOM.
  */
 
-import { useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
 export function TitleGuard() {
-  const pathname  = usePathname()
-  const savedRef  = useRef<string>('')
-
-  // Save the real title on every successful route render
   useEffect(() => {
-    if (document.title && document.title !== 'Loading...') {
-      savedRef.current = document.title
-    }
-  }, [pathname])
+    const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'title')
+    if (!descriptor) return
 
-  // Watch for "Loading..." and revert immediately
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      if (document.title === 'Loading...') {
-        document.title = savedRef.current || 'SupportAI'
-      }
+    Object.defineProperty(document, 'title', {
+      get() {
+        return descriptor.get!.call(this)
+      },
+      set(value: string) {
+        // Block Next.js "Loading..." — keep the previous real title
+        if (value === 'Loading...' || value === 'Loading…') return
+        descriptor.set!.call(this, value)
+      },
+      configurable: true,
     })
 
-    observer.observe(
-      document.querySelector('title') ?? document.head,
-      { subtree: true, characterData: true, childList: true }
-    )
-
-    return () => observer.disconnect()
+    return () => {
+      // Restore the original descriptor on unmount
+      Object.defineProperty(document, 'title', descriptor)
+    }
   }, [])
 
   return null
