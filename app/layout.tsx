@@ -11,6 +11,7 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Serif_Display, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { TitleGuard } from '@/components/providers/TitleGuard'
 import './globals.css'
 
 // ── Font loading ────────────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="font-body antialiased bg-background text-foreground">
         <QueryProvider>
+          <TitleGuard />
           {children}
         </QueryProvider>
         {/* Toaster outside QueryProvider — works globally */}
