@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, Search, FileText, FileType2, File,
@@ -108,6 +109,7 @@ interface Props {
 }
 
 export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
+  const router                                = useRouter()
   const [search, setSearch]                   = useState('')
   const [statusFilter, setStatus]             = useState<'all' | KnowledgeStatus>('all')
   const [showUpload, setShowUpload]           = useState(false)
@@ -142,7 +144,7 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
       )
       if (!res.ok) throw new Error('Delete failed')
       toast.success(`"${confirmSource.name}" deleted`)
-      window.location.reload()
+      router.refresh()
     } catch {
       toast.error('Delete failed. Try again.')
     } finally {
@@ -263,6 +265,7 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
         {showUpload && (
           <UploadModal
             onClose={() => setShowUpload(false)}
+            onSuccess={() => { setShowUpload(false); router.refresh() }}
             userId={userId}
             workspaceId={sources[0]?.workspace_id ?? '00000000-0000-0000-0000-000000000001'}
           />
@@ -327,7 +330,7 @@ function DeleteConfirmModal({
 }
 
 // ── Upload Modal with drag & drop ─────────────────────────────────────────────
-function UploadModal({ onClose, userId, workspaceId }: { onClose: () => void; userId: string; workspaceId: string }) {
+function UploadModal({ onClose, onSuccess, userId, workspaceId }: { onClose: () => void; onSuccess: () => void; userId: string; workspaceId: string }) {
   const [file, setFile]           = useState<File | null>(null)
   const [name, setName]           = useState('')
   const [desc, setDesc]           = useState('')
@@ -381,8 +384,7 @@ function UploadModal({ onClose, userId, workspaceId }: { onClose: () => void; us
       if (dbError) throw dbError
 
       toast.success('File uploaded — processing started')
-      onClose()
-      window.location.reload()
+      onSuccess()
     } catch {
       toast.error('Upload failed. Try again.')
     } finally {
