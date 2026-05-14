@@ -15,6 +15,8 @@ import {
   deleteSystemPromptAction,
 } from '@/features/settings/actions'
 import type { WorkspaceSettings, SystemPrompt } from '@/types'
+import type { IntegrationHealth } from '@/server/integrations/health'
+import { IntegrationsHealthPanel } from './IntegrationsHealthPanel'
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, disabled }: {
@@ -54,6 +56,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 interface Props {
   settings: WorkspaceSettings | null
   prompts:  SystemPrompt[]
+  integrationsHealth: IntegrationHealth[]
 }
 
 const BLANK_PROMPT: SystemPrompt = {
@@ -62,7 +65,7 @@ const BLANK_PROMPT: SystemPrompt = {
   workspace_id: '', created_by: null, created_at: '', updated_at: '',
 }
 
-export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
+export function SettingsShell({ settings, prompts: initialPrompts, integrationsHealth }: Props) {
   const router = useRouter()
 
   // ── Workspace state ───────────────────────────────────────────────────────
@@ -256,6 +259,11 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
             />
           )}
         </div>
+      </div>
+
+      {/* Integrations health */}
+      <div className="mt-6">
+        <IntegrationsHealthPanel initial={integrationsHealth} />
       </div>
 
       {/* Disable AI confirmation modal */}
