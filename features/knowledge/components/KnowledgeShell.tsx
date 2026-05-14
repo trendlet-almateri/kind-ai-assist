@@ -108,10 +108,11 @@ interface Props {
 }
 
 export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
-  const [search, setSearch]         = useState('')
-  const [statusFilter, setStatus]   = useState<'all' | KnowledgeStatus>('all')
-  const [showUpload, setShowUpload] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [search, setSearch]                   = useState('')
+  const [statusFilter, setStatus]             = useState<'all' | KnowledgeStatus>('all')
+  const [showUpload, setShowUpload]           = useState(false)
+  const [deletingId, setDeletingId]           = useState<string | null>(null)
+  const [confirmSource, setConfirmSource]     = useState<KnowledgeSourceWithUploader | null>(null)
 
   const filtered = useMemo(() => {
     let list = sources
@@ -123,9 +124,10 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
     return list
   }, [sources, search, statusFilter])
 
-  const handleDelete = async (source: KnowledgeSourceWithUploader) => {
-    if (!confirm(`Delete "${source.name}"? This cannot be undone.`)) return
-    setDeletingId(source.id)
+  const handleDelete = async () => {
+    if (!confirmSource) return
+    setDeletingId(confirmSource.id)
+    setConfirmSource(null)
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/delete-knowledge`,
@@ -135,11 +137,11 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
             'Content-Type':  'application/json',
             'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}`,
           },
-          body: JSON.stringify({ knowledge_source_id: source.id }),
+          body: JSON.stringify({ knowledge_source_id: confirmSource.id }),
         }
       )
       if (!res.ok) throw new Error('Delete failed')
-      toast.success(`"${source.name}" deleted`)
+      toast.success(`"${confirmSource.name}" deleted`)
       window.location.reload()
     } catch {
       toast.error('Delete failed. Try again.')
@@ -215,7 +217,7 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
                   </span>
                   {isAdmin && (
                     <button
-                      onClick={() => handleDelete(source)}
+                      onClick={() => setConfirmSource(source)}
                       disabled={deletingId === source.id}
                       className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
                     >
@@ -259,8 +261,62 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
 
       <AnimatePresence>
         {showUpload && <UploadModal onClose={() => setShowUpload(false)} userId={userId} />}
+        {confirmSource && (
+          <DeleteConfirmModal
+            name={confirmSource.name}
+            onCancel={() => setConfirmSource(null)}
+            onConfirm={handleDelete}
+          />
+        )}
       </AnimatePresence>
     </div>
+  )
+}
+
+// ── Delete Confirm Modal ──────────────────────────────────────────────────────
+function DeleteConfirmModal({
+  name,
+  onCancel,
+  onConfirm,
+}: {
+  name: string
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="w-full max-w-md glass-card p-6"
+      >
+        <h2 className="font-heading text-xl mb-3">Delete knowledge source</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+          Are you sure you want to delete{' '}
+          <span className="font-semibold text-foreground">{name}</span>?{' '}
+          This will remove it from the AI knowledge base permanently.
+        </p>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
