@@ -18,8 +18,12 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 
-export async function createSupabaseServerClient() {
+// cache() deduplicates this within a single request —
+// multiple Server Components calling createSupabaseServerClient()
+// get the same instance instead of creating a new one each time.
+export const createSupabaseServerClient = cache(async () => {
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -43,7 +47,7 @@ export async function createSupabaseServerClient() {
       },
     }
   )
-}
+})
 
 /**
  * getServerSession
@@ -52,7 +56,9 @@ export async function createSupabaseServerClient() {
  *
  * Returns null if the user is not authenticated.
  */
-export async function getServerSession() {
+// cache() ensures this runs at most once per request even if
+// the layout and page both call getServerSession().
+export const getServerSession = cache(async () => {
   const supabase = await createSupabaseServerClient()
 
   const {
@@ -70,4 +76,4 @@ export async function getServerSession() {
   if (!profile) return null
 
   return { user, profile }
-}
+})

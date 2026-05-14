@@ -21,16 +21,17 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  // ── Auth guard (redundant with middleware but safe) ──────────────────────
-  const session = await getServerSession()
-  if (!session) redirect('/login')
-
-  // ── Fetch workspace settings for AI status badge ─────────────────────────
+  // ── Run auth + workspace settings in parallel ────────────────────────────
+  // getServerSession and createSupabaseServerClient are both React cache()-d
+  // so concurrent calls within the same request reuse the same instance.
   const supabase = await createSupabaseServerClient()
-  const { data: settings } = await supabase
-    .from('workspace_settings')
-    .select('ai_enabled')
-    .single()
+
+  const [session, { data: settings }] = await Promise.all([
+    getServerSession(),
+    supabase.from('workspace_settings').select('ai_enabled').single(),
+  ])
+
+  if (!session) redirect('/login')
 
   const aiEnabled = settings?.ai_enabled ?? true
 
