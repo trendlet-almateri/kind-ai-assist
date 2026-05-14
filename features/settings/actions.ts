@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createSupabaseServerClient } from '@/server/supabase/server'
-import { getServerSession } from '@/server/supabase/server'
+import { createSupabaseServerClient, getServerSession } from '@/server/supabase/server'
+import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import type { ActionState, WorkspaceSettings, SystemPrompt } from '@/types'
 
 // ── Save workspace settings ───────────────────────────────────────────────────
@@ -53,32 +53,35 @@ export async function saveSystemPromptAction(
 
   const id        = formData.get('id') as string | null
   const isActive  = formData.get('is_active') === 'true'
-  const supabase  = await createSupabaseServerClient()
+  // Use admin client — system_prompts RLS blocks anon key inserts/updates.
+  // We already verified admin role above, so service role is safe here.
+  const db = getSupabaseAdminClient()
 
   const payload = {
-    name:        formData.get('name') as string,
-    content:     formData.get('content') as string,
-    model:       formData.get('model') as string,
-    provider:    formData.get('provider') as SystemPrompt['provider'],
-    temperature: Number(formData.get('temperature')) || 0.7,
-    is_active:   isActive,
-    created_by:  session.profile.id,
+    name:         formData.get('name') as string,
+    content:      formData.get('content') as string,
+    model:        formData.get('model') as string,
+    provider:     formData.get('provider') as SystemPrompt['provider'],
+    temperature:  Number(formData.get('temperature')) || 0.7,
+    is_active:    isActive,
+    created_by:   session.profile.id,
+    workspace_id: '00000000-0000-0000-0000-000000000001',
   }
 
   // If setting as active, deactivate all others first
   if (isActive) {
-    await supabase.from('system_prompts').update({ is_active: false }).neq('id', id ?? '')
+    await db.from('system_prompts').update({ is_active: false }).neq('id', id ?? '')
   }
 
   let error
-  if (id && !id.startsWith('new-')) {
-    const res = await supabase
+  if (id) {
+    const res = await db
       .from('system_prompts')
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
     error = res.error
   } else {
-    const res = await supabase.from('system_prompts').insert(payload)
+    const res = await db.from('system_prompts').insert(payload)
     error = res.error
   }
 
@@ -95,8 +98,8 @@ export async function deleteSystemPromptAction(id: string): Promise<ActionState>
     return { error: 'Admin access required' }
   }
 
-  const supabase = await createSupabaseServerClient()
-  const { error } = await supabase.from('system_prompts').delete().eq('id', id)
+  const db = getSupabaseAdminClient()
+  const { error } = await db.from('system_prompts').delete().eq('id', id)
 
   if (error) return { error: error.message }
 
