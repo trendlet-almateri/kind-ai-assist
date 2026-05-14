@@ -82,18 +82,22 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Step 5: Protect admin-only routes ─────────────────────────────────
+  // Read role from cookie (set at login) — avoids a DB round-trip on every
+  // navigation. Falls back to allowing access if cookie is missing (the
+  // layout's getServerSession() will catch it server-side).
   if (user && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
-    const { data: profile } = await supabase
-      .from('agent_profiles')
-      .select('role, status')
-      .eq('id', user.id)
-      .single()
+    const role   = request.cookies.get('x-user-role')?.value
+    const status = request.cookies.get('x-user-status')?.value
 
-    if (!profile || profile.role !== 'admin' || profile.status !== 'active') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/inbox'
-      return NextResponse.redirect(url)
+    if (role && status) {
+      if (role !== 'admin' || status !== 'active') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/inbox'
+        return NextResponse.redirect(url)
+      }
     }
+    // If cookie not set yet, let the request through —
+    // the layout will verify and redirect if needed.
   }
 
   return supabaseResponse

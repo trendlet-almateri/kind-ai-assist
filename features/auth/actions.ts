@@ -12,6 +12,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/server/supabase/server'
 import type { ActionState } from '@/types'
 
@@ -62,6 +63,13 @@ export async function loginAction(
     return { error: 'Your account has been suspended. Contact your administrator.' }
   }
 
+  // Cache role + status in cookies so middleware doesn't need a DB call
+  // on every navigation to admin routes.
+  const cookieStore = await cookies()
+  const cookieOpts = { path: '/', httpOnly: true, sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7 }
+  cookieStore.set('x-user-role',   profile.role,   cookieOpts)
+  cookieStore.set('x-user-status', profile.status, cookieOpts)
+
   revalidatePath('/', 'layout')
 
   // Redirect based on role — admins go to dashboard, agents to inbox
@@ -72,6 +80,11 @@ export async function loginAction(
 export async function logoutAction(): Promise<void> {
   const supabase = await createSupabaseServerClient()
   await supabase.auth.signOut()
+
+  const cookieStore = await cookies()
+  cookieStore.delete('x-user-role')
+  cookieStore.delete('x-user-status')
+
   revalidatePath('/', 'layout')
   redirect('/login')
 }
