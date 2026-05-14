@@ -292,7 +292,7 @@ function DeleteConfirmModal({
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
       <motion.div
@@ -393,7 +393,7 @@ function UploadModal({ onClose, userId, workspaceId }: { onClose: () => void; us
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
