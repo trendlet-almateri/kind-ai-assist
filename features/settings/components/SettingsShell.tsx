@@ -73,8 +73,9 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
   const [savingSettings,     setSavingSettings]     = useState(false)
 
   // ── Prompt editor state ───────────────────────────────────────────────────
-  const [editingPrompt, setEditingPrompt] = useState<SystemPrompt>(BLANK_PROMPT)
-  const [isNew,         setIsNew]         = useState(true)
+  // null = empty state (nothing selected), prompt = editing existing, BLANK = new
+  const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null)
+  const [isNew,         setIsNew]         = useState(false)
 
   const startNew = () => {
     setEditingPrompt({ ...BLANK_PROMPT, id: '' })
@@ -110,8 +111,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
     <div className="p-4 pt-16 lg:p-8 lg:pt-8 font-agent min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-heading text-3xl">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Configure workspace &amp; AI</p>
+        <h1 className="font-heading text-3xl">Workspace &amp; AI</h1>
       </div>
 
       {/* Two-column grid */}
@@ -213,10 +213,10 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
                   key={p.id}
                   onClick={() => startEdit(p)}
                   className={cn(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors',
-                    editingPrompt.id === p.id
-                      ? 'bg-primary/10'
-                      : 'hover:bg-accent/50'
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors border',
+                    editingPrompt?.id === p.id
+                      ? 'bg-primary/8 border-primary/15'
+                      : 'border-transparent hover:bg-accent/50'
                   )}
                 >
                   <div className={cn(
@@ -229,7 +229,6 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
                       {p.provider} · {p.model}
                     </p>
                   </div>
-                  <Pencil className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
                 </div>
               ))}
             </div>
@@ -238,14 +237,24 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
           {/* Divider */}
           <div className="h-px bg-border/40" />
 
-          {/* Inline prompt editor */}
-          <PromptEditor
-            key={editingPrompt.id || 'new'}
-            prompt={editingPrompt}
-            isNew={isNew}
-            onSaved={() => { startNew(); router.refresh() }}
-            onDeleted={() => { startNew(); router.refresh() }}
-          />
+          {/* Empty state */}
+          {!editingPrompt && (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/50">
+              <Sparkles className="h-5 w-5 mb-2 opacity-40" />
+              <p className="text-sm">Select a prompt to edit or click + New</p>
+            </div>
+          )}
+
+          {/* Inline prompt editor — only when a prompt is selected or new */}
+          {editingPrompt && (
+            <PromptEditor
+              key={editingPrompt.id || 'new'}
+              prompt={editingPrompt}
+              isNew={isNew}
+              onSaved={() => { setEditingPrompt(null); router.refresh() }}
+              onDeleted={() => { setEditingPrompt(null); router.refresh() }}
+            />
+          )}
         </div>
       </div>
 
@@ -454,7 +463,7 @@ function PromptEditor({
         <button
           type="submit"
           disabled={isPending}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {isPending
             ? <><Loader2 className="h-4 w-4 animate-spin" />Saving…</>

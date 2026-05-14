@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { getServerSession, createSupabaseServerClient } from '@/server/supabase/server'
 import { SettingsShell } from '@/features/settings/components/SettingsShell'
 
-export const metadata: Metadata = { title: 'Settings' }
+export const metadata: Metadata = { title: 'Workspace & AI' }
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
