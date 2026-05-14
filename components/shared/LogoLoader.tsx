@@ -16,7 +16,7 @@ export function LogoLoader() {
           100%  { transform: translate(0px,   0px);   }
         }
         .logo-figure-eight {
-          animation: figureEight 1.1s ease-in-out infinite;
+          animation: figureEight 0.75s ease-in-out infinite;
         }
       `}</style>
       <div className="flex h-screen w-full items-center justify-center bg-background">
