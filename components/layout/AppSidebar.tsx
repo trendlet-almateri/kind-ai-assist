@@ -37,7 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/inbox',     label: 'Inbox',          icon: Inbox,           adminOnly: false },
   { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen,        adminOnly: false },
   { href: '/agents',    label: 'Agents',         icon: Users,           adminOnly: true  },
-  { href: '/settings',  label: 'Settings',       icon: Settings,        adminOnly: true  },
+  { href: '/settings',  label: 'Workspace & AI', icon: Settings,        adminOnly: true  },
 ]
 
 // Agent-view pages use Geist Sans (calmer feel)
