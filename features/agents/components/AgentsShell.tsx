@@ -2,7 +2,10 @@
 
 import { useState, useMemo, useActionState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { UserPlus, Search, Pencil, Archive, ShieldCheck, ShieldOff, X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  UserPlus, Search, Pencil, Archive, ShieldCheck, ShieldOff,
+  X, Loader2, ChevronLeft, ChevronRight, ChevronDown, Check,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { inviteAgentAction, updateAgentStatusAction, updateAgentRoleAction } from '@/features/agents/actions'
@@ -14,23 +17,94 @@ const ROLE_BADGE: Record<AgentRole, string> = {
   agent: 'bg-primary/15 text-primary',
 }
 
-const STATUS_BADGE: Record<AgentStatus, { cls: string; label: string }> = {
-  active:    { cls: 'bg-success/15 text-success',            label: 'Active'    },
-  suspended: { cls: 'bg-warning/15 text-warning',            label: 'Suspended' },
-  archived:  { cls: 'bg-muted text-muted-foreground',        label: 'Archived'  },
+const STATUS_BADGE: Record<AgentStatus, { cls: string; dot: string; label: string }> = {
+  active:    { cls: 'bg-success/15 text-success',       dot: 'bg-success',          label: 'Active'    },
+  suspended: { cls: 'bg-warning/15 text-warning',       dot: 'bg-warning',          label: 'Suspended' },
+  archived:  { cls: 'bg-muted text-muted-foreground',   dot: 'bg-muted-foreground', label: 'Archived'  },
 }
 
+// ── Generic custom dropdown ───────────────────────────────────────────────────
+function FilterDropdown<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T
+  onChange: (v: T) => void
+  options: { value: T; label: string; dot?: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find((o) => o.value === value)!
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-sm min-w-[130px] hover:border-border/80 transition-colors"
+      >
+        {selected.dot && <span className={cn('h-2 w-2 rounded-full shrink-0', selected.dot)} />}
+        <span className="flex-1 text-left">{selected.label}</span>
+        <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute left-0 top-full z-20 mt-1.5 w-44 rounded-xl border border-border bg-card shadow-xl overflow-hidden"
+            >
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => { onChange(opt.value); setOpen(false) }}
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-accent transition-colors"
+                >
+                  {opt.dot
+                    ? <span className={cn('h-2 w-2 rounded-full shrink-0', opt.dot)} />
+                    : <span className="h-2 w-2 shrink-0" />
+                  }
+                  <span className="flex-1 text-left">{opt.label}</span>
+                  {value === opt.value && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+const ROLE_OPTIONS: { value: 'all' | AgentRole; label: string; dot?: string }[] = [
+  { value: 'all',   label: 'All Roles' },
+  { value: 'admin', label: 'Admin',    dot: 'bg-warning' },
+  { value: 'agent', label: 'Agent',    dot: 'bg-primary' },
+]
+
+const STATUS_OPTIONS: { value: 'all' | AgentStatus; label: string; dot?: string }[] = [
+  { value: 'all',       label: 'All Statuses' },
+  { value: 'active',    label: 'Active',    dot: 'bg-success' },
+  { value: 'suspended', label: 'Suspended', dot: 'bg-warning' },
+  { value: 'archived',  label: 'Archived',  dot: 'bg-muted-foreground' },
+]
+
+// ── Main component ────────────────────────────────────────────────────────────
 interface Props {
   agents:        AgentWithConvCount[]
   currentUserId: string
 }
 
 export function AgentsShell({ agents, currentUserId }: Props) {
-  const [search, setSearch]           = useState('')
-  const [roleFilter, setRoleFilter]   = useState<'all' | AgentRole>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | AgentStatus>('all')
-  const [page, setPage]               = useState(0)
-  const [showInvite, setShowInvite]   = useState(false)
+  const [search, setSearch]               = useState('')
+  const [roleFilter, setRoleFilter]       = useState<'all' | AgentRole>('all')
+  const [statusFilter, setStatusFilter]   = useState<'all' | AgentStatus>('all')
+  const [page, setPage]                   = useState(0)
+  const [showInvite, setShowInvite]       = useState(false)
 
   const filtered = useMemo(() => {
     let list = agents
@@ -64,11 +138,12 @@ export function AgentsShell({ agents, currentUserId }: Props) {
 
   return (
     <div className="p-4 pt-16 lg:p-6 lg:pt-6 space-y-6 font-agent">
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-3xl">Agents</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{agents.length} team members</p>
+          <p className="mt-1 text-sm text-muted-foreground">{agents.length} agents total</p>
         </div>
         <button
           onClick={() => setShowInvite(true)}
@@ -80,35 +155,18 @@ export function AgentsShell({ agents, currentUserId }: Props) {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-            placeholder="Search agents…"
-            className="w-full rounded-xl border border-border bg-input pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+            placeholder="Search name, email, username…"
+            className="w-full rounded-xl border border-border bg-card pl-9 pr-3 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => { setRoleFilter(e.target.value as 'all' | AgentRole); setPage(0) }}
-          className="rounded-xl border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
-        >
-          <option value="all">All roles</option>
-          <option value="admin">Admin</option>
-          <option value="agent">Agent</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value as 'all' | AgentStatus); setPage(0) }}
-          className="rounded-xl border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
-        >
-          <option value="all">All status</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="archived">Archived</option>
-        </select>
+        <FilterDropdown value={roleFilter}   onChange={(v) => { setRoleFilter(v);   setPage(0) }} options={ROLE_OPTIONS}   />
+        <FilterDropdown value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(0) }} options={STATUS_OPTIONS} />
       </div>
 
       {/* Table */}
@@ -116,7 +174,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50">
-              {['Agent', 'Role', 'Status', 'Conversations', 'Actions'].map((h) => (
+              {['Agent', 'Email', 'Role', 'Status', 'Online', 'Assigned', 'Actions'].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
                   {h}
                 </th>
@@ -126,71 +184,79 @@ export function AgentsShell({ agents, currentUserId }: Props) {
           <tbody>
             {paged.map((agent) => (
               <tr key={agent.id} className="border-b border-border/30 hover:bg-accent/30 transition-colors">
+                {/* Agent */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 font-heading text-xs text-primary">
-                        {agent.full_name.charAt(0)}
-                      </div>
-                      <span className={cn(
-                        'absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card',
-                        agent.is_online ? 'bg-success' : 'bg-muted-foreground/40'
-                      )} />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 font-heading text-xs text-primary shrink-0">
+                      {agent.full_name.charAt(0)}
                     </div>
                     <div>
                       <p className="font-medium">{agent.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{agent.email}</p>
+                      <p className="text-xs text-muted-foreground">@{agent.username}</p>
                     </div>
                   </div>
                 </td>
+                {/* Email */}
+                <td className="px-4 py-3 text-xs text-muted-foreground">{agent.email}</td>
+                {/* Role */}
                 <td className="px-4 py-3">
                   <span className={cn('badge-glow text-[11px]', ROLE_BADGE[agent.role])}>
                     {agent.role}
                   </span>
                 </td>
+                {/* Status */}
                 <td className="px-4 py-3">
                   <span className={cn('badge-glow text-[11px]', STATUS_BADGE[agent.status].cls)}>
                     {STATUS_BADGE[agent.status].label}
                   </span>
                 </td>
+                {/* Online dot */}
+                <td className="px-4 py-3">
+                  <span className={cn(
+                    'h-2.5 w-2.5 rounded-full inline-block',
+                    agent.is_online ? 'bg-success' : 'bg-muted-foreground/30'
+                  )} />
+                </td>
+                {/* Assigned */}
                 <td className="px-4 py-3">
                   <span className="font-semibold text-primary">{agent.assigned_conversations}</span>
                 </td>
+                {/* Actions */}
                 <td className="px-4 py-3">
                   {agent.id !== currentUserId && (
                     <div className="flex items-center gap-1">
                       {agent.status === 'active' ? (
                         <button
                           onClick={() => handleStatusChange(agent.id, 'suspended')}
-                          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-warning hover:bg-warning/10 transition-colors"
+                          className="rounded-lg p-1.5 text-muted-foreground hover:text-warning hover:bg-warning/10 transition-colors"
                           title="Suspend"
                         >
-                          <ShieldOff className="h-3 w-3" />
+                          <ShieldOff className="h-3.5 w-3.5" />
                         </button>
                       ) : agent.status === 'suspended' ? (
                         <button
                           onClick={() => handleStatusChange(agent.id, 'active')}
-                          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
+                          className="rounded-lg p-1.5 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
                           title="Activate"
                         >
-                          <ShieldCheck className="h-3 w-3" />
+                          <ShieldCheck className="h-3.5 w-3.5" />
                         </button>
                       ) : null}
                       {agent.status !== 'archived' && (
                         <button
                           onClick={() => handleStatusChange(agent.id, 'archived')}
-                          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           title="Archive"
                         >
-                          <Archive className="h-3 w-3" />
+                          <Archive className="h-3.5 w-3.5" />
                         </button>
                       )}
                       <button
                         onClick={() => handleRoleChange(agent.id, agent.role === 'admin' ? 'agent' : 'admin')}
-                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                         title={agent.role === 'admin' ? 'Demote to agent' : 'Promote to admin'}
                       >
-                        <Pencil className="h-3 w-3" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   )}
@@ -201,9 +267,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
         </table>
 
         {paged.length === 0 && (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            No agents found
-          </div>
+          <div className="py-12 text-center text-sm text-muted-foreground">No agents found</div>
         )}
       </div>
 
@@ -217,9 +281,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-sm text-muted-foreground">
-            {page + 1} / {totalPages}
-          </span>
+          <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page === totalPages - 1}
@@ -230,7 +292,6 @@ export function AgentsShell({ agents, currentUserId }: Props) {
         </div>
       )}
 
-      {/* Invite Modal */}
       <AnimatePresence>
         {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       </AnimatePresence>
@@ -249,10 +310,9 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -260,10 +320,10 @@ function InviteModal({ onClose }: { onClose: () => void }) {
         exit={{ scale: 0.95, opacity: 0 }}
         className="w-full max-w-md glass-card p-6"
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="font-heading text-xl">Invite Agent</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-4 w-4" />
+          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent transition-colors">
+            <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
@@ -275,28 +335,24 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
         <form action={formAction} className="space-y-4">
           {[
-            { name: 'full_name', label: 'Full Name',  type: 'text',  placeholder: 'Jane Smith'     },
-            { name: 'username',  label: 'Username',   type: 'text',  placeholder: 'jane.smith'     },
-            { name: 'email',     label: 'Email',      type: 'email', placeholder: 'jane@company.com' },
+            { name: 'full_name', label: 'Full Name',  type: 'text',  placeholder: 'Jane Smith'        },
+            { name: 'username',  label: 'Username',   type: 'text',  placeholder: 'jane.smith'        },
+            { name: 'email',     label: 'Email',      type: 'email', placeholder: 'jane@company.com'  },
           ].map((f) => (
             <div key={f.name} className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                {f.label}
-              </label>
+              <label className="text-sm text-muted-foreground">{f.label}</label>
               <input
                 name={f.name}
                 type={f.type}
                 placeholder={f.placeholder}
                 required
-                className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+                className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40"
               />
             </div>
           ))}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Role
-            </label>
+            <label className="text-sm text-muted-foreground">Role</label>
             <select
               name="role"
               defaultValue="agent"
@@ -309,15 +365,13 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
           <div className="flex gap-3 pt-2">
             <button
-              type="button"
-              onClick={onClose}
+              type="button" onClick={onClose}
               className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-accent transition-colors"
             >
               Cancel
             </button>
             <button
-              type="submit"
-              disabled={isPending}
+              type="submit" disabled={isPending}
               className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               {isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : 'Send Invite'}
