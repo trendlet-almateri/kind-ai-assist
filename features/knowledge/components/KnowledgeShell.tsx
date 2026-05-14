@@ -260,7 +260,13 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
       )}
 
       <AnimatePresence>
-        {showUpload && <UploadModal onClose={() => setShowUpload(false)} userId={userId} />}
+        {showUpload && (
+          <UploadModal
+            onClose={() => setShowUpload(false)}
+            userId={userId}
+            workspaceId={sources[0]?.workspace_id ?? '00000000-0000-0000-0000-000000000001'}
+          />
+        )}
         {confirmSource && (
           <DeleteConfirmModal
             name={confirmSource.name}
@@ -321,7 +327,7 @@ function DeleteConfirmModal({
 }
 
 // ── Upload Modal with drag & drop ─────────────────────────────────────────────
-function UploadModal({ onClose, userId }: { onClose: () => void; userId: string }) {
+function UploadModal({ onClose, userId, workspaceId }: { onClose: () => void; userId: string; workspaceId: string }) {
   const [file, setFile]           = useState<File | null>(null)
   const [name, setName]           = useState('')
   const [desc, setDesc]           = useState('')
@@ -361,6 +367,7 @@ function UploadModal({ onClose, userId }: { onClose: () => void; userId: string 
       if (storageError) throw storageError
 
       const { error: dbError } = await supabase.from('knowledge_sources').insert({
+        workspace_id: workspaceId,
         name,
         description:  desc || null,
         file_name:    file.name,
@@ -448,7 +455,7 @@ function UploadModal({ onClose, userId }: { onClose: () => void; userId: string 
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="File display name"
-              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40"
             />
           </div>
 
@@ -460,7 +467,7 @@ function UploadModal({ onClose, userId }: { onClose: () => void; userId: string 
               onChange={(e) => setDesc(e.target.value)}
               placeholder="Brief description of this knowledge source"
               rows={2}
-              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 resize-none"
+              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 resize-none"
             />
           </div>
 
