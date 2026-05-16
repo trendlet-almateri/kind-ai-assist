@@ -3,21 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn, timeAgo, getInitial, getAvatarColor } from '@/lib/utils'
 import { Search, Bot, AlertTriangle, SlidersHorizontal, Check } from 'lucide-react'
-import type { Conversation, ConvStatus } from '@/types/database'
+import type { Conversation } from '@/types/database'
 import type { ConvFilter } from '@/types'
 
 const FILTER_TABS: { key: ConvFilter; label: string }[] = [
-  { key: 'all',            label: 'All'    },
-  { key: 'open',           label: 'Open'   },
-  { key: 'assigned_to_me', label: 'Mine'   },
-  { key: 'needs_review',   label: 'Review' },
-]
-
-const STATUS_OPTIONS: { value: ConvStatus; label: string; color: string }[] = [
-  { value: 'open',     label: 'Open',     color: 'bg-destructive' },
-  { value: 'assigned', label: 'Assigned', color: 'bg-warning' },
-  { value: 'resolved', label: 'Resolved', color: 'bg-success' },
-  { value: 'closed',   label: 'Closed',   color: 'bg-muted-foreground' },
+  { key: 'all',          label: 'All'    },
+  { key: 'needs_review', label: 'Review' },
 ]
 
 const HANDLING_OPTIONS = [
@@ -41,8 +32,7 @@ export function ConversationList({
   conversations, lastMessages, isLoading, selectedId,
   filter, onSelect, onFilterChange, search, onSearch,
 }: Props) {
-  const [filterOpen, setFilterOpen]   = useState(false)
-  const [statusFilter, setStatusFilter] = useState<ConvStatus[]>([])
+  const [filterOpen, setFilterOpen]       = useState(false)
   const [handlingFilter, setHandlingFilter] = useState<string[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -58,11 +48,10 @@ export function ConversationList({
   }, [])
 
   const unreadCount = conversations.filter(c => c.needs_human_review).length
-  const hasFilters  = statusFilter.length > 0 || handlingFilter.length > 0
+  const hasFilters = handlingFilter.length > 0
 
   // Apply dropdown filters on top of tab filter
   const displayed = conversations.filter(c => {
-    if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false
     if (handlingFilter.length > 0) {
       const handling = c.is_ai_active ? 'ai' : 'human'
       if (!handlingFilter.includes(handling)) return false
@@ -70,9 +59,6 @@ export function ConversationList({
     return true
   })
 
-  function toggleStatus(v: ConvStatus) {
-    setStatusFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])
-  }
   function toggleHandling(v: string) {
     setHandlingFilter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])
   }
@@ -145,24 +131,6 @@ export function ConversationList({
             <div className="absolute right-0 top-9 z-50 w-52 rounded-xl border border-border/60 bg-popover shadow-lg overflow-hidden">
               <div className="p-2">
                 <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
-                  Status
-                </p>
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => toggleStatus(opt.value)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-accent transition-colors"
-                  >
-                    <span className={cn('h-2 w-2 rounded-full shrink-0', opt.color)} />
-                    <span className="flex-1 text-left text-xs">{opt.label}</span>
-                    {statusFilter.includes(opt.value) && (
-                      <Check className="h-3 w-3 text-primary" />
-                    )}
-                  </button>
-                ))}
-              </div>
-              <div className="border-t border-border/50 p-2">
-                <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
                   Handling
                 </p>
                 {HANDLING_OPTIONS.map((opt) => (
@@ -181,7 +149,7 @@ export function ConversationList({
               {hasFilters && (
                 <div className="border-t border-border/50 p-2">
                   <button
-                    onClick={() => { setStatusFilter([]); setHandlingFilter([]) }}
+                    onClick={() => { setHandlingFilter([]) }}
                     className="w-full rounded-lg py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     Clear filters
