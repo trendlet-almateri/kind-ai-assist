@@ -150,7 +150,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
                           {/* Time inside bubble */}
                           <p className={cn(
                             'mt-1 text-[10px] leading-none',
-                            isRight ? 'text-right' : 'text-left',
+                            isRight ? 'text-left' : 'text-right',
                             isAI     && 'text-primary-foreground/50',
                             isAgent  && 'text-foreground/40',
                             isCustomer && 'text-muted-foreground/50',
