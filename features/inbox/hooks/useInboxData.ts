@@ -45,7 +45,7 @@ export function useConversations(filter: ConvFilter, userId?: string) {
         .is('deleted_at', null)
         .order('updated_at', { ascending: false })
 
-      if (filter === 'needs_review')   q = q.eq('is_ai_active', false)
+      if (filter === 'needs_review')   q = q.eq('had_human_intervention', true)
 
       const { data, error } = await q
       if (error) throw error
@@ -212,7 +212,7 @@ export function useToggleAI(agentId?: string) {
         updated_at:   new Date().toISOString(),
         ...(newActive
           ? { assigned_agent: null, status: 'open', agent_last_reply_at: null }
-          : { assigned_agent: agentId, status: 'assigned', agent_last_reply_at: new Date().toISOString() }
+          : { assigned_agent: agentId, status: 'assigned', agent_last_reply_at: new Date().toISOString(), had_human_intervention: true }
         ),
       }
 

@@ -62,6 +62,7 @@ export interface Conversation {
   customer_phone: string | null
   status: ConvStatus
   is_ai_active: boolean
+  had_human_intervention: boolean
   assigned_agent: string | null  // FK → agent_profiles.id
   auto_return_enabled: boolean
   agent_last_reply_at: string | null
