@@ -150,36 +150,27 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
                         </div>
 
                         {/* Footer */}
-                        <div className={cn(
-                          'mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground/60',
-                          isRight ? 'justify-end' : 'justify-start'
-                        )}>
+                        <div className={cn('mt-1 flex flex-col gap-0.5', isRight ? 'items-end' : 'items-start')}>
+                          {/* AI chip + tokens — only for AI messages */}
                           {isAI && (
-                            <>
-                              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
                                 <Bot className="h-2.5 w-2.5 text-primary" />
                                 <span className="text-primary/80 font-medium">{msg.model_used ?? 'AI'}</span>
                               </span>
                               {msg.tokens_used != null && (
-                                <>
-                                  <span className="opacity-40">·</span>
-                                  <span className="flex items-center gap-0.5">
-                                    <Zap className="h-2.5 w-2.5 text-warning/70" />
-                                    <span>{msg.tokens_used}</span>
-                                  </span>
-                                  <span className="opacity-40">·</span>
-                                </>
+                                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/50">
+                                  <Zap className="h-2.5 w-2.5 text-warning/60" />
+                                  <span>{msg.tokens_used}</span>
+                                </span>
                               )}
-                              {msg.tokens_used == null && <span className="opacity-40">·</span>}
-                            </>
+                            </div>
                           )}
-                          <span>{formatTime(msg.created_at)}</span>
-                          {isAgent && (
-                            <>
-                              <span className="opacity-40">·</span>
-                              <span className="text-warning/70">Agent</span>
-                            </>
-                          )}
+                          {/* Time — same style for all messages */}
+                          <span className="text-[10px] text-muted-foreground/50">
+                            {formatTime(msg.created_at)}
+                            {isAgent && <span className="ml-1 text-warning/60">· Agent</span>}
+                          </span>
                         </div>
                       </div>
                     </div>
