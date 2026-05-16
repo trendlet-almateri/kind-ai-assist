@@ -140,38 +140,41 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
                       <div className={cn('max-w-[72%]', isRight && 'items-end flex flex-col')}>
                         {/* Bubble */}
                         <div className={cn(
-                          'rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+                          'rounded-2xl px-4 pt-2.5 pb-2 text-sm leading-relaxed',
                           rtl && 'text-right',
                           isCustomer && 'bg-muted/70 border border-border/40 text-foreground rounded-bl-sm',
                           isAI       && 'bg-primary text-primary-foreground rounded-br-sm',
                           isAgent    && 'bg-warning/20 border border-warning/25 text-foreground rounded-br-sm',
                         )}>
                           <p dir={rtl ? 'rtl' : 'ltr'}>{msg.content}</p>
+                          {/* Time inside bubble */}
+                          <p className={cn(
+                            'mt-1 text-[10px] leading-none',
+                            isRight ? 'text-right' : 'text-left',
+                            isAI     && 'text-primary-foreground/50',
+                            isAgent  && 'text-foreground/40',
+                            isCustomer && 'text-muted-foreground/50',
+                          )}>
+                            {formatTime(msg.created_at)}
+                            {isAgent && <span className="ml-1">· Agent</span>}
+                          </p>
                         </div>
 
-                        {/* Footer */}
-                        <div className={cn('mt-1 flex flex-col gap-0.5', isRight ? 'items-end' : 'items-start')}>
-                          {/* AI chip + tokens — only for AI messages */}
-                          {isAI && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
-                                <Bot className="h-2.5 w-2.5 text-primary" />
-                                <span className="text-primary/80 font-medium">{msg.model_used ?? 'AI'}</span>
+                        {/* AI chip + tokens — below bubble */}
+                        {isAI && (
+                          <div className={cn('mt-1 flex items-center gap-1.5', isRight ? 'justify-end' : 'justify-start')}>
+                            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
+                              <Bot className="h-2.5 w-2.5 text-primary" />
+                              <span className="text-primary/80 font-medium">{msg.model_used ?? 'AI'}</span>
+                            </span>
+                            {msg.tokens_used != null && (
+                              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/50">
+                                <Zap className="h-2.5 w-2.5 text-warning/60" />
+                                <span>{msg.tokens_used}</span>
                               </span>
-                              {msg.tokens_used != null && (
-                                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/50">
-                                  <Zap className="h-2.5 w-2.5 text-warning/60" />
-                                  <span>{msg.tokens_used}</span>
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {/* Time — same style for all messages */}
-                          <span className="text-[10px] text-muted-foreground/50">
-                            {formatTime(msg.created_at)}
-                            {isAgent && <span className="ml-1 text-warning/60">· Agent</span>}
-                          </span>
-                        </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
