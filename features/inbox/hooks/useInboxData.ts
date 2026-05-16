@@ -45,9 +45,7 @@ export function useConversations(filter: ConvFilter, userId?: string) {
         .is('deleted_at', null)
         .order('updated_at', { ascending: false })
 
-      if (filter === 'open')           q = q.eq('status', 'open')
-      if (filter === 'assigned_to_me') q = q.eq('assigned_agent', userId ?? '')
-      if (filter === 'needs_review')   q = q.eq('needs_human_review', true)
+      if (filter === 'needs_review')   q = q.eq('is_ai_active', false)
 
       const { data, error } = await q
       if (error) throw error
