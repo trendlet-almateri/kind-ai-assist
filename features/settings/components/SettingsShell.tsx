@@ -115,7 +115,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
       </div>
 
       {/* Two-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
         {/* ── LEFT — Workspace ─────────────────────────────────────────── */}
         <div className="glass-card p-6">
@@ -186,7 +186,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
         </div>
 
         {/* ── RIGHT — AI Prompts ────────────────────────────────────────── */}
-        <div className="glass-card p-6 space-y-5 overflow-y-auto">
+        <div className="glass-card p-6 space-y-5">
           <SectionLabel>AI Prompts</SectionLabel>
 
           {/* Prompts list header */}
