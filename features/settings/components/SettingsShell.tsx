@@ -197,15 +197,24 @@ export function SettingsShell({ settings, prompts: initialPrompts, integrationsH
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Prompts</span>
-              <span className="text-xs text-muted-foreground">{initialPrompts.length}</span>
+              <span className={cn(
+                'text-xs tabular-nums',
+                initialPrompts.length >= 3 ? 'text-warning' : 'text-muted-foreground'
+              )}>
+                {initialPrompts.length}/3
+              </span>
             </div>
-            <button
-              onClick={startNew}
-              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New
-            </button>
+            {initialPrompts.length < 3 ? (
+              <button
+                onClick={startNew}
+                className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New
+              </button>
+            ) : (
+              <span className="text-[10px] text-muted-foreground/50">Limit reached</span>
+            )}
           </div>
 
           {/* Prompt list */}
@@ -240,11 +249,11 @@ export function SettingsShell({ settings, prompts: initialPrompts, integrationsH
           {/* Divider */}
           <div className="h-px bg-border/40" />
 
-          {/* Empty state */}
+          {/* Empty state — compact */}
           {!editingPrompt && (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/50">
-              <Sparkles className="h-5 w-5 mb-2 opacity-40" />
-              <p className="text-sm">Select a prompt to edit or click + New</p>
+            <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground/40">
+              <Sparkles className="h-3.5 w-3.5 opacity-50" />
+              <p className="text-xs">Select a prompt to edit or click + New</p>
             </div>
           )}
 

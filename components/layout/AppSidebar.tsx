@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Inbox, BookOpen, Users,
-  Settings, ChevronLeft, LogOut, Menu,
+  BrainCircuit, ChevronLeft, LogOut, Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logoutAction } from '@/features/auth/actions'
@@ -37,7 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/inbox',     label: 'Inbox',          icon: Inbox,           adminOnly: false },
   { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen,        adminOnly: false },
   { href: '/agents',    label: 'Agents',         icon: Users,           adminOnly: true  },
-  { href: '/settings',  label: 'Workspace & AI', icon: Settings,        adminOnly: true  },
+  { href: '/settings',  label: 'Workspace & AI', icon: BrainCircuit,    adminOnly: true  },
 ]
 
 // Agent-view pages use Geist Sans (calmer feel)
