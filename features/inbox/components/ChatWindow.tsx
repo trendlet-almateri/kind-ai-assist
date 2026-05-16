@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, Bot, User, Cpu, Loader2, MessageSquare, Phone } from 'lucide-react'
+import { Send, Bot, Cpu, Loader2, MessageSquare, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, getDateLabel, formatTime } from '@/lib/utils'
 import type { Message } from '@/types/database'
@@ -135,15 +135,8 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
                   return (
                     <div
                       key={msg.id}
-                      className={cn('flex gap-2.5 items-end', isRight ? 'justify-end' : 'justify-start')}
+                      className={cn('flex items-end', isRight ? 'justify-end' : 'justify-start')}
                     >
-                      {/* Customer avatar (left side) */}
-                      {isCustomer && (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted border border-border/50">
-                          <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                      )}
-
                       <div className={cn('max-w-[72%]', isRight && 'items-end flex flex-col')}>
                         {/* Bubble */}
                         <div className={cn(
@@ -156,38 +149,39 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
                           <p dir={rtl ? 'rtl' : 'ltr'}>{msg.content}</p>
                         </div>
 
-                        {/* Footer: time + model info */}
+                        {/* Footer */}
                         <div className={cn(
                           'mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground/60',
                           isRight ? 'justify-end' : 'justify-start'
                         )}>
-                          <span>{formatTime(msg.created_at)}</span>
-                          {isAI && msg.model_used && (
+                          {isAI && (
                             <>
-                              <span className="opacity-50">·</span>
-                              <span className="opacity-70">{msg.model_used}</span>
+                              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5">
+                                <Bot className="h-2.5 w-2.5 text-primary" />
+                                <span className="text-primary/80 font-medium">{msg.model_used ?? 'AI'}</span>
+                              </span>
+                              {msg.tokens_used != null && (
+                                <>
+                                  <span className="opacity-40">·</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Zap className="h-2.5 w-2.5 text-warning/70" />
+                                    <span>{msg.tokens_used}</span>
+                                  </span>
+                                  <span className="opacity-40">·</span>
+                                </>
+                              )}
+                              {msg.tokens_used == null && <span className="opacity-40">·</span>}
                             </>
                           )}
+                          <span>{formatTime(msg.created_at)}</span>
                           {isAgent && (
                             <>
-                              <span className="opacity-50">·</span>
+                              <span className="opacity-40">·</span>
                               <span className="text-warning/70">Agent</span>
                             </>
                           )}
                         </div>
                       </div>
-
-                      {/* AI / Agent avatar (right side) */}
-                      {isAI && (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 border border-primary/20">
-                          <Bot className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                      )}
-                      {isAgent && (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-warning/15 border border-warning/20">
-                          <User className="h-3.5 w-3.5 text-warning" />
-                        </div>
-                      )}
                     </div>
                   )
                 })}
@@ -200,12 +194,6 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
 
       {/* ── Input area ──────────────────────────────────────────── */}
       <div className="shrink-0 border-t border-border/50 bg-sidebar/80 backdrop-blur-md px-4 py-3">
-        {isAiActive && (
-          <div className="mb-2.5 flex items-center gap-2 rounded-xl bg-primary/10 border border-primary/15 px-3 py-2">
-            <Bot className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs text-primary">AI is handling this conversation — take over to reply manually.</span>
-          </div>
-        )}
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
