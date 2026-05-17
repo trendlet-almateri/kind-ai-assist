@@ -69,18 +69,16 @@ export function ConversationList({
 
       {/* ── Header ───────────────────────────────────────────── */}
       {/* pl-16 on mobile = extra breathing room after the AppSidebar hamburger */}
-      <div className="flex h-14 shrink-0 items-center justify-between pl-16 pr-4 lg:px-4">
-        <div className="flex items-center gap-3">
-          <h2 className="font-heading text-base tracking-tight">Inbox</h2>
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
-            {displayed.length}
+      <div className="flex h-16 shrink-0 items-center gap-3 pl-16 pr-4 lg:px-4">
+        <span className="text-[15px] font-semibold leading-none tracking-[-0.01em] text-foreground">Inbox</span>
+        <span className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-muted px-1.5 text-[11px] font-semibold leading-none text-muted-foreground tabular-nums">
+          {displayed.length}
+        </span>
+        {unreadCount > 0 && (
+          <span className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-destructive/90 px-1.5 text-[11px] font-bold leading-none text-white tabular-nums">
+            {unreadCount}
           </span>
-          {unreadCount > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive/90 px-1.5 text-[10px] font-bold text-white tabular-nums">
-              {unreadCount}
-            </span>
-          )}
-        </div>
+        )}
       </div>
 
       {/* ── Search ───────────────────────────────────────────── */}
