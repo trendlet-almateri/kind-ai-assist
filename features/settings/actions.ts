@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createSupabaseServerClient, getServerSession } from '@/server/supabase/server'
+import { getServerSession } from '@/server/supabase/server'
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import type { ActionState, WorkspaceSettings, SystemPrompt } from '@/types'
 
@@ -29,8 +29,10 @@ export async function saveWorkspaceSettingsAction(
     updated_at:              new Date().toISOString(),
   }
 
-  const supabase = await createSupabaseServerClient()
-  const { error } = await supabase
+  // Use admin client — workspace_settings RLS blocks regular-key updates.
+  // Role is already verified as 'admin' above, so service role is safe.
+  const db = getSupabaseAdminClient()
+  const { error } = await db
     .from('workspace_settings')
     .update(updates)
     .not('id', 'is', null) // update the single settings row

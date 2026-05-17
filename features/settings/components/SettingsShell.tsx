@@ -99,7 +99,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
     const result = await saveWorkspaceSettingsAction({}, fd)
     setSavingSettings(false)
     if (result.error) toast.error(result.error)
-    else toast.success('Settings saved')
+    else { toast.success('Settings saved'); router.refresh() }
   }
 
   // ── Delete prompt ─────────────────────────────────────────────────────────
