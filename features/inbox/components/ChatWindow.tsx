@@ -197,12 +197,12 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
       </div>
 
       {/* ── Input area ──────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-border/50 bg-sidebar/80 backdrop-blur-md px-4 py-3">
+      <div className="shrink-0 border-t border-border/40 bg-sidebar px-3 py-3">
         {isResolved ? (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-border/50 bg-muted/40 px-4 py-3">
-            <CheckCheck className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-            <p className="text-xs text-muted-foreground/60">
-              Conversation resolved — reopen it in the details panel to reply
+          <div className="flex items-center justify-center gap-2 rounded-2xl bg-muted/60 border border-border/40 px-4 py-3.5">
+            <CheckCheck className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+            <p className="text-xs text-muted-foreground/50">
+              Conversation resolved · reopen in details to reply
             </p>
           </div>
         ) : (
@@ -213,29 +213,29 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={inputLocked || isSending}
-              placeholder={inputLocked ? 'AI is handling this…' : 'Type a message… (Enter to send, Shift+Enter for new line)'}
+              placeholder={inputLocked ? 'AI is handling this conversation…' : 'Type a message…'}
               rows={1}
               className={cn(
-                'flex-1 resize-none rounded-xl border border-border/60 bg-input px-3.5 py-2.5',
-                'text-sm placeholder:text-muted-foreground/40 leading-relaxed',
-                'focus:outline-none focus:ring-1 focus:ring-primary/40',
-                'disabled:opacity-40 disabled:cursor-not-allowed',
-                'min-h-[42px] max-h-32 overflow-y-auto custom-scrollbar',
+                'flex-1 resize-none rounded-2xl border border-border/50 bg-background/80 px-4 py-3',
+                'text-sm placeholder:text-muted-foreground/35 leading-relaxed',
+                'focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/30',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'min-h-[46px] max-h-32 overflow-y-auto custom-scrollbar',
               )}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || inputLocked || isSending}
               className={cn(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                'flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl',
                 'bg-primary text-primary-foreground',
                 'transition-all duration-150 hover:bg-primary/90 active:scale-95',
-                'disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100',
+                'disabled:opacity-25 disabled:cursor-not-allowed disabled:active:scale-100',
               )}
             >
               {isSending
                 ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <Send className="h-4 w-4" />
+                : <Send className="h-[17px] w-[17px]" />
               }
             </button>
           </div>
