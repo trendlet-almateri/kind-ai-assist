@@ -189,7 +189,9 @@ export function useSendMessage() {
 
 // ── Takeover events ───────────────────────────────────────────────────────────
 export function useTakeoverEvents(conversationId: string | null) {
-  return useQuery({
+  const qc = useQueryClient()
+
+  const query = useQuery({
     queryKey: KEYS.takeovers(conversationId ?? ''),
     queryFn: async () => {
       if (!conversationId) return []
@@ -203,6 +205,23 @@ export function useTakeoverEvents(conversationId: string | null) {
     },
     enabled: !!conversationId,
   })
+
+  // Real-time: refresh activity log on new events
+  useEffect(() => {
+    if (!conversationId) return
+    const channel = supabase
+      .channel(`takeovers-${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'takeover_events',
+        filter: `conversation_id=eq.${conversationId}`,
+      }, () => {
+        qc.invalidateQueries({ queryKey: KEYS.takeovers(conversationId) })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [conversationId, qc])
+
+  return query
 }
 
 // ── Toggle AI ─────────────────────────────────────────────────────────────────
@@ -210,7 +229,7 @@ export function useToggleAI(agentId?: string) {
   const qc = useQueryClient()
 
   return useCallback(
-    async (conversationId: string, currentlyActive: boolean) => {
+    async (conversationId: string, currentlyActive: boolean, workspaceId: string) => {
       if (!agentId) return
       const newActive = !currentlyActive
 
@@ -225,6 +244,7 @@ export function useToggleAI(agentId?: string) {
 
       await supabase.from('conversations').update(updates).eq('id', conversationId)
       await supabase.from('takeover_events').insert({
+        workspace_id:    workspaceId,
         conversation_id: conversationId,
         agent_id:        agentId,
         event_type:      newActive ? 'ai_resumed' : 'human_took_over',
@@ -268,10 +288,12 @@ export function useResolveConversation() {
     mutationFn: async ({
       conversationId,
       agentId,
+      workspaceId,
       reopen = false,
     }: {
       conversationId: string
       agentId: string
+      workspaceId: string
       reopen?: boolean
     }) => {
       const now = new Date().toISOString()
@@ -291,8 +313,9 @@ export function useResolveConversation() {
       const { error: evtErr } = await supabase
         .from('takeover_events')
         .insert({
+          workspace_id:    workspaceId,
           conversation_id: conversationId,
-          agent_id: agentId,
+          agent_id:        agentId,
           event_type: reopen ? 'conversation_reopened' : 'conversation_resolved',
         })
       if (evtErr) throw evtErr

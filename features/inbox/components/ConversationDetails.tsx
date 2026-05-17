@@ -17,7 +17,7 @@ interface Props {
   agents:               AgentProfile[]
   aiEnabled:            boolean
   isAdmin:              boolean
-  onToggleAI:           (id: string, active: boolean) => void
+  onToggleAI:           (id: string, active: boolean, workspaceId: string) => void
   onUpdateConversation: (id: string, updates: Partial<Conversation>) => void
   onResolve:            (id: string, reopen?: boolean) => void
 }
@@ -249,7 +249,7 @@ export function ConversationDetails({
 
         {/* Take Over / Return button */}
         <button
-          onClick={() => onToggleAI(conversation.id, conversation.is_ai_active)}
+          onClick={() => onToggleAI(conversation.id, conversation.is_ai_active, conversation.workspace_id)}
           disabled={isResolved}
           className={cn(
             'w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold',

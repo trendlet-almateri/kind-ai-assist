@@ -102,9 +102,10 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
 
   const handleResolve = useCallback(
     (id: string, reopen = false) => {
-      resolveConversation.mutate({ conversationId: id, agentId: profile.id, reopen })
+      const workspaceId = conversations.find((c) => c.id === id)?.workspace_id ?? ''
+      resolveConversation.mutate({ conversationId: id, agentId: profile.id, workspaceId, reopen })
     },
-    [resolveConversation, profile.id]
+    [resolveConversation, profile.id, conversations]
   )
 
   const handleSelect = useCallback((id: string | null) => {
