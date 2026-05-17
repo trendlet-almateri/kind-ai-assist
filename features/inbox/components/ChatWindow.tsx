@@ -1,18 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, Bot, Cpu, Loader2, MessageSquare, Zap } from 'lucide-react'
+import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, getDateLabel, formatTime } from '@/lib/utils'
 import type { Message } from '@/types/database'
 
 interface Props {
-  messages:       Message[]
-  isLoading:      boolean
-  isAiActive:     boolean
-  isSending:      boolean
-  onSend:         (content: string) => Promise<void>
-  conversationId: string | null
+  messages:           Message[]
+  isLoading:          boolean
+  isAiActive:         boolean
+  isResolved:         boolean
+  isSending:          boolean
+  onSend:             (content: string) => Promise<void>
+  conversationId:     string | null
 }
 
 /** Detect if text is primarily RTL (Arabic, Hebrew, etc.) */
@@ -21,7 +22,7 @@ function isRTL(text: string): boolean {
   return rtlRegex.test(text)
 }
 
-export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend, conversationId }: Props) {
+export function ChatWindow({ messages, isLoading, isAiActive, isResolved, isSending, onSend, conversationId }: Props) {
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -40,7 +41,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
 
   const handleSend = async () => {
     const text = input.trim()
-    if (!text || isAiActive || isSending) return
+    if (!text || isAiActive || isSending || isResolved) return
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     try {
@@ -188,39 +189,48 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
 
       {/* ── Input area ──────────────────────────────────────────── */}
       <div className="shrink-0 border-t border-border/50 bg-sidebar/80 backdrop-blur-md px-4 py-3">
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isAiActive || isSending}
-            placeholder={isAiActive ? 'AI is handling this…' : 'Type a message… (Enter to send, Shift+Enter for new line)'}
-            rows={1}
-            className={cn(
-              'flex-1 resize-none rounded-xl border border-border/60 bg-input px-3.5 py-2.5',
-              'text-sm placeholder:text-muted-foreground/40 leading-relaxed',
-              'focus:outline-none focus:ring-1 focus:ring-primary/40',
-              'disabled:opacity-40 disabled:cursor-not-allowed',
-              'min-h-[42px] max-h-32 overflow-y-auto custom-scrollbar',
-            )}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isAiActive || isSending}
-            className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
-              'bg-primary text-primary-foreground',
-              'transition-all duration-150 hover:bg-primary/90 active:scale-95',
-              'disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100',
-            )}
-          >
-            {isSending
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <Send className="h-4 w-4" />
-            }
-          </button>
-        </div>
+        {isResolved ? (
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-border/50 bg-muted/40 px-4 py-3">
+            <CheckCheck className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+            <p className="text-xs text-muted-foreground/60">
+              Conversation resolved — reopen it in the details panel to reply
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isAiActive || isSending}
+              placeholder={isAiActive ? 'AI is handling this…' : 'Type a message… (Enter to send, Shift+Enter for new line)'}
+              rows={1}
+              className={cn(
+                'flex-1 resize-none rounded-xl border border-border/60 bg-input px-3.5 py-2.5',
+                'text-sm placeholder:text-muted-foreground/40 leading-relaxed',
+                'focus:outline-none focus:ring-1 focus:ring-primary/40',
+                'disabled:opacity-40 disabled:cursor-not-allowed',
+                'min-h-[42px] max-h-32 overflow-y-auto custom-scrollbar',
+              )}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isAiActive || isSending}
+              className={cn(
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                'bg-primary text-primary-foreground',
+                'transition-all duration-150 hover:bg-primary/90 active:scale-95',
+                'disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100',
+              )}
+            >
+              {isSending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Send className="h-4 w-4" />
+              }
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

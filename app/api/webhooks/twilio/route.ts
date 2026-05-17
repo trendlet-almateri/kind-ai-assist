@@ -132,12 +132,14 @@ async function processInbound(opts: {
   const db = getSupabaseAdminClient()
 
   // ── 1. Find or create conversation ──────────────────────────────────────
+  // Look for any active OR resolved conversation for this phone number.
+  // Resolved ones get reopened when the customer messages again.
   const { data: existingConv, error: findErr } = await db
     .from('conversations')
-    .select('id, is_ai_active, customer_name, workspace_id')
+    .select('id, is_ai_active, customer_name, workspace_id, status')
     .eq('customer_phone', fromPhone)
     .is('deleted_at', null)
-    .in('status', ['open', 'assigned'])
+    .in('status', ['open', 'assigned', 'resolved'])
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -153,6 +155,28 @@ async function processInbound(opts: {
   if (existingConv) {
     conversationId = existingConv.id
     workspaceId = existingConv.workspace_id
+
+    // Reopen resolved conversations automatically
+    if (existingConv.status === 'resolved') {
+      const now = new Date().toISOString()
+      await db.from('conversations').update({
+        status: 'open',
+        is_ai_active: true,
+        assigned_agent: null,
+        resolved_at: null,
+        updated_at: now,
+      }).eq('id', conversationId)
+
+      await db.from('takeover_events').insert({
+        conversation_id: conversationId,
+        workspace_id: workspaceId,
+        agent_id: '00000000-0000-0000-0000-000000000000', // system actor
+        event_type: 'conversation_reopened',
+        note: 'Reopened automatically — customer sent a new message',
+      })
+      console.log('[Twilio Webhook] step1 reopened resolved conversation', { conversationId })
+    }
+
     if (!existingConv.customer_name && profileName) {
       const { error: upErr } = await db
         .from('conversations')

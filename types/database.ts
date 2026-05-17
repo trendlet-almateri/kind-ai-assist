@@ -23,7 +23,7 @@ export type AgentStatus  = 'active' | 'suspended' | 'archived'
 export type ConvChannel  = 'web' | 'whatsapp'
 export type ConvStatus   = 'open' | 'assigned' | 'resolved' | 'closed'
 export type MessageRole  = 'user' | 'assistant' | 'agent' | 'system'
-export type TakeoverType = 'human_took_over' | 'ai_resumed'
+export type TakeoverType = 'human_took_over' | 'ai_resumed' | 'conversation_resolved' | 'conversation_reopened'
 export type LLMProvider  = 'openai' | 'openrouter'
 export type KnowledgeStatus = 'uploading' | 'processing' | 'ready' | 'failed' | 'deleted'
 
@@ -68,6 +68,7 @@ export interface Conversation {
   agent_last_reply_at: string | null
   needs_human_review: boolean
   escalation_reason: string | null
+  resolved_at: string | null
   metadata: Record<string, Json>
   created_at: string
   updated_at: string

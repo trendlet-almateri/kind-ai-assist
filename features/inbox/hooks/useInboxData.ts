@@ -45,7 +45,14 @@ export function useConversations(filter: ConvFilter, userId?: string) {
         .is('deleted_at', null)
         .order('updated_at', { ascending: false })
 
-      if (filter === 'needs_review')   q = q.eq('had_human_intervention', true)
+      if (filter === 'resolved') {
+        q = q.eq('status', 'resolved')
+      } else if (filter === 'needs_review') {
+        q = q.eq('had_human_intervention', true).neq('status', 'resolved')
+      } else {
+        // all / open / assigned_to_me — exclude resolved
+        q = q.neq('status', 'resolved')
+      }
 
       const { data, error } = await q
       if (error) throw error
@@ -246,6 +253,49 @@ export function useUpdateConversation() {
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', conversationId)
       if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inbox'] })
+    },
+  })
+}
+
+// ── Resolve conversation ──────────────────────────────────────────────────────
+export function useResolveConversation() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      agentId,
+      reopen = false,
+    }: {
+      conversationId: string
+      agentId: string
+      reopen?: boolean
+    }) => {
+      const now = new Date().toISOString()
+
+      const conversationUpdates = reopen
+        ? { status: 'open' as const, is_ai_active: true, assigned_agent: null,
+            resolved_at: null, updated_at: now }
+        : { status: 'resolved' as const, resolved_at: now, needs_human_review: false,
+            escalation_reason: null, updated_at: now }
+
+      const { error: convErr } = await supabase
+        .from('conversations')
+        .update(conversationUpdates)
+        .eq('id', conversationId)
+      if (convErr) throw convErr
+
+      const { error: evtErr } = await supabase
+        .from('takeover_events')
+        .insert({
+          conversation_id: conversationId,
+          agent_id: agentId,
+          event_type: reopen ? 'conversation_reopened' : 'conversation_resolved',
+        })
+      if (evtErr) throw evtErr
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inbox'] })

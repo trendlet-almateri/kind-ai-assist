@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn, timeAgo, getInitial, getAvatarColor } from '@/lib/utils'
-import { Search, Bot, User, SlidersHorizontal, Check, MessageCircle } from 'lucide-react'
+import { Search, Bot, User, SlidersHorizontal, Check, MessageCircle, CheckCheck } from 'lucide-react'
 import type { Conversation } from '@/types/database'
 import type { ConvFilter } from '@/types'
 
 const FILTER_TABS: { key: ConvFilter; label: string }[] = [
-  { key: 'all',          label: 'All'    },
-  { key: 'needs_review', label: 'Review' },
+  { key: 'all',          label: 'All'      },
+  { key: 'needs_review', label: 'Review'   },
+  { key: 'resolved',     label: 'Resolved' },
 ]
 
 const HANDLING_OPTIONS = [
@@ -186,10 +187,11 @@ export function ConversationList({
         ) : (
           <div className="p-2 space-y-px">
             {displayed.map((conv) => {
-              const isSelected = conv.id === selectedId
-              const last = lastMessages[conv.id]
+              const isSelected  = conv.id === selectedId
+              const last        = lastMessages[conv.id]
               const avatarColor = getAvatarColor(conv.id)
-              const initial = getInitial(conv.customer_name, conv.customer_phone)
+              const initial     = getInitial(conv.customer_name, conv.customer_phone)
+              const isResolved  = conv.status === 'resolved'
 
               return (
                 <button
@@ -200,58 +202,76 @@ export function ConversationList({
                     isSelected
                       ? 'bg-primary/10 border border-primary/20'
                       : 'border border-transparent hover:bg-accent',
+                    isResolved && !isSelected && 'opacity-60',
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    {/* Avatar + AI/Human badge */}
+                    {/* Avatar + status badge */}
                     <div className="relative shrink-0">
                       <div className={cn(
                         'flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold',
+                        isResolved ? 'opacity-50' : '',
                         avatarColor
                       )}>
                         {initial}
                       </div>
-                      {/* AI/Human indicator — matches photo style */}
-                      <span className={cn(
-                        'absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar shadow-sm',
-                        conv.is_ai_active
-                          ? 'bg-primary'
-                          : 'bg-destructive/80'
-                      )}>
-                        {conv.is_ai_active
-                          ? <Bot className="h-2.5 w-2.5 text-white" />
-                          : <User className="h-2.5 w-2.5 text-white" />
-                        }
-                      </span>
+                      {/* Resolved badge overrides AI/Human badge */}
+                      {isResolved ? (
+                        <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar bg-muted shadow-sm">
+                          <CheckCheck className="h-2.5 w-2.5 text-muted-foreground" />
+                        </span>
+                      ) : (
+                        <span className={cn(
+                          'absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar shadow-sm',
+                          conv.is_ai_active ? 'bg-primary' : 'bg-destructive/80'
+                        )}>
+                          {conv.is_ai_active
+                            ? <Bot className="h-2.5 w-2.5 text-white" />
+                            : <User className="h-2.5 w-2.5 text-white" />
+                          }
+                        </span>
+                      )}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Name + time */}
                       <div className="flex items-baseline justify-between gap-1 mb-1">
-                        <span className="truncate text-[13px] font-semibold leading-none text-foreground">
+                        <span className={cn(
+                          'truncate text-[13px] font-semibold leading-none',
+                          isResolved ? 'text-muted-foreground' : 'text-foreground'
+                        )}>
                           {conv.customer_name ?? conv.customer_phone ?? 'Unknown'}
                         </span>
                         <span className="shrink-0 text-[10px] text-muted-foreground/50 leading-none">
-                          {timeAgo(conv.updated_at)}
+                          {isResolved && conv.resolved_at
+                            ? timeAgo(conv.resolved_at)
+                            : timeAgo(conv.updated_at)}
                         </span>
                       </div>
 
-                      {/* Sender icon + message preview */}
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {last?.role === 'assistant' && (
-                          <Bot className="h-3 w-3 shrink-0 text-primary/70" />
-                        )}
-                        {last?.role === 'agent' && (
-                          <User className="h-3 w-3 shrink-0 text-warning/80" />
-                        )}
-                        {(!last || last.role === 'user') && (
-                          <MessageCircle className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-                        )}
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {last?.content ?? 'No messages yet'}
-                        </p>
-                      </div>
+                      {/* Resolved label OR sender icon + message preview */}
+                      {isResolved ? (
+                        <div className="flex items-center gap-1">
+                          <CheckCheck className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                          <p className="text-[11px] text-muted-foreground/50 italic">Resolved</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {last?.role === 'assistant' && (
+                            <Bot className="h-3 w-3 shrink-0 text-primary/70" />
+                          )}
+                          {last?.role === 'agent' && (
+                            <User className="h-3 w-3 shrink-0 text-warning/80" />
+                          )}
+                          {(!last || last.role === 'user') && (
+                            <MessageCircle className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                          )}
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {last?.content ?? 'No messages yet'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </button>

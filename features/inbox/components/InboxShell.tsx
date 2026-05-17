@@ -9,7 +9,7 @@ import { ConversationDetails } from './ConversationDetails'
 import {
   useConversations, useLastMessages, useMessages,
   useSendMessage, useTakeoverEvents, useToggleAI,
-  useUpdateConversation, useAgentsList,
+  useUpdateConversation, useAgentsList, useResolveConversation,
 } from '@/features/inbox/hooks/useInboxData'
 import type { ConvFilter } from '@/types'
 import type { AgentProfile } from '@/types/database'
@@ -56,9 +56,10 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
   const { data: takeoverEvents = [] } = useTakeoverEvents(selectedId)
   const { data: agents = [] }         = useAgentsList()
 
-  const sendMessageMut    = useSendMessage()
-  const toggleAI          = useToggleAI(profile.id)
+  const sendMessageMut     = useSendMessage()
+  const toggleAI           = useToggleAI(profile.id)
   const updateConversation = useUpdateConversation()
+  const resolveConversation = useResolveConversation()
 
   // ── Filter + search ───────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -97,6 +98,13 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
       updateConversation.mutate({ conversationId: id, updates })
     },
     [updateConversation]
+  )
+
+  const handleResolve = useCallback(
+    (id: string, reopen = false) => {
+      resolveConversation.mutate({ conversationId: id, agentId: profile.id, reopen })
+    },
+    [resolveConversation, profile.id]
   )
 
   const handleSelect = useCallback((id: string | null) => {
@@ -149,6 +157,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
           messages={messages}
           isLoading={msgLoading}
           isAiActive={selectedConv?.is_ai_active ?? true}
+          isResolved={selectedConv?.status === 'resolved'}
           isSending={isSending}
           onSend={handleSend}
           conversationId={selectedId}
@@ -164,6 +173,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
             isAdmin={profile.role === 'admin'}
             onToggleAI={toggleAI}
             onUpdateConversation={handleUpdateConversation}
+            onResolve={handleResolve}
           />
         </div>
       </div>
@@ -207,6 +217,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
                 isAdmin={profile.role === 'admin'}
                 onToggleAI={toggleAI}
                 onUpdateConversation={handleUpdateConversation}
+                onResolve={handleResolve}
               />
             </div>
           </div>

@@ -14,7 +14,7 @@ export interface AuthUser {
 }
 
 // ── Inbox filters ──────────────────────────────────────────────────────────
-export type ConvFilter = 'all' | 'open' | 'assigned_to_me' | 'needs_review'
+export type ConvFilter = 'all' | 'open' | 'assigned_to_me' | 'needs_review' | 'resolved'
 
 // ── API response shapes ────────────────────────────────────────────────────
 export interface ApiSuccess<T = void> {

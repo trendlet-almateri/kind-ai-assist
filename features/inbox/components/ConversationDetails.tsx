@@ -3,7 +3,7 @@
 import {
   UserCheck, Shield, AlertTriangle,
   CheckCircle2, Activity, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  Phone, Sparkles, Check,
+  Phone, Sparkles, Check, CheckCheck, RotateCcw,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { cn, formatDateTime, getInitial, getAvatarColor } from '@/lib/utils'
@@ -19,6 +19,7 @@ interface Props {
   isAdmin:              boolean
   onToggleAI:           (id: string, active: boolean) => void
   onUpdateConversation: (id: string, updates: Partial<Conversation>) => void
+  onResolve:            (id: string, reopen?: boolean) => void
 }
 
 function SectionCard({ icon: Icon, label, children, className }: {
@@ -40,7 +41,7 @@ function SectionCard({ icon: Icon, label, children, className }: {
 
 export function ConversationDetails({
   conversation, takeoverEvents, agents, aiEnabled, isAdmin,
-  onToggleAI, onUpdateConversation,
+  onToggleAI, onUpdateConversation, onResolve,
 }: Props) {
   const [activityPage, setActivityPage]     = useState(0)
   const [activityOpen, setActivityOpen]     = useState(false)
@@ -75,12 +76,12 @@ export function ConversationDetails({
     )
   }
 
-  const avatarColor   = getAvatarColor(conversation.id)
-  const initial       = getInitial(conversation.customer_name, conversation.customer_phone)
-  const totalPages    = Math.ceil(takeoverEvents.length / ACTIVITY_PAGE_SIZE)
-  // "Recently active" = last update within 30 minutes
+  const avatarColor    = getAvatarColor(conversation.id)
+  const initial        = getInitial(conversation.customer_name, conversation.customer_phone)
+  const totalPages     = Math.ceil(takeoverEvents.length / ACTIVITY_PAGE_SIZE)
   const recentlyActive = Date.now() - new Date(conversation.updated_at).getTime() < 30 * 60 * 1000
   const isWhatsApp     = conversation.channel === 'whatsapp'
+  const isResolved     = conversation.status === 'resolved'
   const pagedEvents = takeoverEvents.slice(
     activityPage * ACTIVITY_PAGE_SIZE,
     (activityPage + 1) * ACTIVITY_PAGE_SIZE
@@ -249,7 +250,7 @@ export function ConversationDetails({
         {/* Take Over / Return button */}
         <button
           onClick={() => onToggleAI(conversation.id, conversation.is_ai_active)}
-          disabled={!aiEnabled}
+          disabled={!aiEnabled || isResolved}
           className={cn(
             'w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold',
             'border transition-all duration-150 active:scale-[0.98]',
@@ -302,6 +303,40 @@ export function ConversationDetails({
               <p className="text-[10px] text-muted-foreground/50">All clear</p>
             </div>
           </div>
+        )}
+      </SectionCard>
+
+      {/* ── Resolve / Reopen ───────────────────────────────────── */}
+      <SectionCard icon={CheckCheck} label="Conversation">
+        {isResolved ? (
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 border border-border/60 px-3 py-2.5">
+              <CheckCheck className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-foreground/80">Resolved</p>
+                {conversation.resolved_at && (
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                    {new Date(conversation.resolved_at).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => onResolve(conversation.id, true)}
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-border/60 py-2.5 text-xs font-semibold text-foreground/80 hover:bg-accent transition-colors active:scale-[0.98]"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reopen Conversation
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => onResolve(conversation.id)}
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-success/10 border border-success/25 py-2.5 text-xs font-semibold text-success hover:bg-success/15 transition-colors active:scale-[0.98]"
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            Resolve Conversation
+          </button>
         )}
       </SectionCard>
 
