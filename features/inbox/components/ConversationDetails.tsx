@@ -198,7 +198,7 @@ export function ConversationDetails({
               <CheckCircle2 className="h-2.5 w-2.5 text-muted-foreground/30" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-foreground/80">No Review Needed</p>
+              <p className="text-xs font-semibold text-primary">No Review Needed</p>
               <p className="text-[10px] text-muted-foreground/50">All clear</p>
             </div>
           </div>
@@ -233,24 +233,32 @@ export function ConversationDetails({
               <p className="text-xs text-muted-foreground/40 py-1">No activity yet</p>
             ) : (
               <>
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {pagedEvents.map((event) => {
                     const agent   = agents.find((a) => a.id === event.agent_id)
                     const isHuman = event.event_type === 'human_took_over'
+                    const name    = agent?.full_name ?? 'Unknown'
+                    const initial = name.charAt(0).toUpperCase()
                     return (
-                      <div key={event.id} className="flex items-start gap-2">
+                      <div key={event.id} className="flex items-start gap-2.5">
+                        {/* Agent avatar */}
                         <div className={cn(
-                          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full mt-0.5',
-                          isHuman ? 'bg-warning/15 text-warning' : 'bg-primary/15 text-primary'
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                          isHuman
+                            ? 'bg-warning/20 text-warning'
+                            : 'bg-primary/20 text-primary'
                         )}>
-                          {isHuman ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                          {initial}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium leading-tight">
-                            {isHuman ? 'Human took over' : 'AI resumed'}
+                          <p className="text-xs leading-snug">
+                            <span className="font-bold text-foreground">{name}</span>
+                            <span className="text-muted-foreground/70">
+                              {isHuman ? ' took over' : ' returned to AI'}
+                            </span>
                           </p>
-                          <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-                            {agent?.full_name ?? 'Unknown'} · {formatDateTime(event.created_at)}
+                          <p className="text-[10px] text-muted-foreground/40 mt-0.5 tabular-nums">
+                            {formatDateTime(event.created_at)}
                           </p>
                         </div>
                       </div>
