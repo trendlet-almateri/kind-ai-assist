@@ -112,7 +112,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
       </div>
 
       {/* Panel 2 + 3 — Chat + details (full width on mobile when convo selected) */}
-      <div className={`${showChat ? 'flex' : 'hidden'} lg:flex flex-1 flex-col lg:flex-row min-w-0`}>
+      <div className={`${showChat ? 'flex' : 'hidden'} lg:flex flex-1 flex-col lg:flex-row min-w-0 h-full`}>
         {/* Back button on mobile */}
         <button
           onClick={() => setSelectedId(null)}

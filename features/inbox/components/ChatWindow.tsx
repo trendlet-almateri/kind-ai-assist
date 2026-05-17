@@ -76,7 +76,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, isSending, onSend,
 
   if (!conversationId) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center chat-pattern-bg">
+      <div className="flex h-full flex-col items-center justify-center chat-pattern-bg">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/40 mb-4">
           <MessageSquare className="h-7 w-7 text-muted-foreground/25" />
         </div>

@@ -48,7 +48,7 @@ export function ConversationDetails({
 
   if (!conversation) {
     return (
-      <div className="flex w-[260px] shrink-0 flex-col items-center justify-center border-l border-border/50 bg-sidebar p-6 text-center">
+      <div className="flex h-full w-[260px] shrink-0 flex-col items-center justify-center border-l border-border/50 bg-sidebar p-6 text-center">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/40">
           <Activity className="h-5 w-5 text-muted-foreground/25" />
         </div>
