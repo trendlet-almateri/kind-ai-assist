@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Info, X } from 'lucide-react'
+import { Info, X, ChevronLeft } from 'lucide-react'
 import { ConversationList } from './ConversationList'
 import { ChatWindow } from './ChatWindow'
 import { ConversationDetails } from './ConversationDetails'
@@ -138,31 +138,29 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
 
       {/* ── Mobile full-screen chat overlay ──────────────────────────────── */}
       {showChat && (
-        <div className="fixed inset-0 z-30 flex flex-col bg-background lg:hidden">
-          {/* Mobile top bar — back · name · resolve · info */}
-          <div className="shrink-0 flex items-center gap-2 h-14 px-3 border-b border-border/50 bg-sidebar/95 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex flex-col bg-background lg:hidden">
+          {/* Mobile top bar */}
+          <div className="shrink-0 relative flex items-center h-16 px-2 border-b border-border/50 bg-sidebar">
+            {/* Back arrow — left */}
             <button
               onClick={() => setSelectedId(null)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-foreground hover:bg-accent active:bg-accent/80 transition-colors"
               aria-label="Back"
             >
-              <span className="text-lg leading-none">←</span>
+              <ChevronLeft className="h-5 w-5" />
             </button>
 
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold leading-none">
+            {/* Name — absolute center */}
+            <div className="absolute inset-x-12 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-sm font-semibold leading-tight text-center truncate w-full">
                 {selectedConv?.customer_name ?? selectedConv?.customer_phone ?? 'Conversation'}
               </p>
-              {selectedConv?.customer_name && selectedConv?.customer_phone && (
-                <p className="mt-0.5 text-[11px] text-muted-foreground/60 truncate">
-                  {selectedConv.customer_phone}
-                </p>
-              )}
             </div>
 
+            {/* Info — right */}
             <button
               onClick={() => setDetailsOpen(true)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors ml-auto"
               aria-label="Details"
             >
               <Info className="h-4 w-4" />

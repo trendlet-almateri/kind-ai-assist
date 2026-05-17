@@ -27,12 +27,17 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
   // Input is locked only when AI is BOTH per-conversation active AND globally enabled
   const inputLocked = isAiActive && aiEnabled
   const [input, setInput] = useState('')
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const bottomRef   = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const prevConvId  = useRef<string | null>(null)
 
+  // Instant jump on conversation open, smooth scroll for new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+    if (!bottomRef.current || messages.length === 0) return
+    const isNewConv = conversationId !== prevConvId.current
+    prevConvId.current = conversationId
+    bottomRef.current.scrollIntoView({ behavior: isNewConv ? 'instant' : 'smooth' })
+  }, [conversationId, messages.length])
 
   // Auto-resize textarea
   useEffect(() => {
