@@ -43,12 +43,15 @@ export function ConversationDetails({
   onToggleAI, onUpdateConversation,
 }: Props) {
   const [activityPage, setActivityPage]     = useState(0)
-  const [activityOpen, setActivityOpen]     = useState(true)
+  const [activityOpen, setActivityOpen]     = useState(false)
   const [agentDropOpen, setAgentDropOpen]   = useState(false)
   const agentDropRef                        = useRef<HTMLDivElement>(null)
 
-  // Reset activity page when the selected conversation changes
-  useEffect(() => { setActivityPage(0) }, [conversation?.id])
+  // Reset activity page + auto-open log only when events exist
+  useEffect(() => {
+    setActivityPage(0)
+    setActivityOpen(takeoverEvents.length > 0)
+  }, [conversation?.id, takeoverEvents.length])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
