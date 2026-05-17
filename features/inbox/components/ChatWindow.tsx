@@ -220,7 +220,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
                 'text-sm placeholder:text-muted-foreground/35 leading-relaxed',
                 'focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/30',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
-                'min-h-[46px] max-h-32 overflow-y-auto custom-scrollbar',
+                'min-h-[46px] max-h-32 overflow-y-hidden',
               )}
             />
             <button
