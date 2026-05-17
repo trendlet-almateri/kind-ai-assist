@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 15
 import { getServerSession, createSupabaseServerClient } from '@/server/supabase/server'
-import { sendWhatsAppMessage } from '@/server/whatsapp/client'
+import { sendTwilioWhatsAppMessage } from '@/server/whatsapp/twilio-client'
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     // Send via WhatsApp (non-blocking — we already saved the record)
     try {
-      await sendWhatsAppMessage(conversation.customer_phone, message.trim())
+      await sendTwilioWhatsAppMessage(conversation.customer_phone, message.trim())
     } catch (waErr) {
       console.error('[send] WhatsApp delivery error:', waErr)
       // Don't fail the request — message is saved, delivery is best-effort
