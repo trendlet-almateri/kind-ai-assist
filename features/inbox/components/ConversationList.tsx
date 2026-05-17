@@ -84,30 +84,30 @@ export function ConversationList({
       </div>
 
       {/* ── Search ───────────────────────────────────────────── */}
-      <div className="px-3 pt-3 pb-2">
+      <div className="px-3 pt-3 pb-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+          <Search className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/40" />
           <input
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Search conversations…"
-            className="w-full rounded-xl border border-border/60 bg-input pl-9 pr-3 py-2 text-xs placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40"
+            className="w-full rounded-xl border border-border/50 bg-background/60 pl-9 pr-3 py-2.5 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/30"
           />
         </div>
       </div>
 
       {/* ── Filter tabs + dropdown ────────────────────────────── */}
-      <div className="flex items-center border-b border-border/50 px-3 gap-1">
-        <div className="flex flex-1">
+      <div className="flex items-center px-3 pb-2 gap-1">
+        <div className="flex flex-1 gap-1">
           {FILTER_TABS.map((tab) => (
             <button
               key={tab.key}
               onClick={() => onFilterChange(tab.key)}
               className={cn(
-                'flex-1 py-2 text-[11px] font-medium transition-colors border-b-2',
+                'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
                 filter === tab.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               )}
             >
               {tab.label}
@@ -135,14 +135,14 @@ export function ConversationList({
           {filterOpen && (
             <div className="absolute right-0 top-9 z-50 w-52 rounded-xl border border-border/60 bg-popover shadow-lg overflow-hidden">
               <div className="p-2">
-                <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                <p className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50">
                   Handling
                 </p>
                 {HANDLING_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => toggleHandling(opt.value)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-accent transition-colors"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-sm hover:bg-accent transition-colors"
                   >
                     <span className="flex-1 text-left text-xs">{opt.label}</span>
                     {handlingFilter.includes(opt.value) && (
@@ -155,7 +155,7 @@ export function ConversationList({
                 <div className="border-t border-border/50 p-2">
                   <button
                     onClick={() => { setHandlingFilter([]) }}
-                    className="w-full rounded-lg py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                    className="w-full rounded-lg py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     Clear filters
                   </button>
@@ -169,27 +169,27 @@ export function ConversationList({
       {/* ── Conversation list ─────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {isLoading ? (
-          <div className="space-y-px p-2">
+          <div className="space-y-1 px-3 py-2">
             {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-xl p-3">
-                <div className="h-10 w-10 rounded-full skeleton-pulse shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-24 rounded skeleton-pulse" />
-                  <div className="h-2.5 w-36 rounded skeleton-pulse" />
+              <div key={i} className="flex items-center gap-3 rounded-2xl px-3 py-4">
+                <div className="h-11 w-11 rounded-full skeleton-pulse shrink-0" />
+                <div className="flex-1 space-y-2.5">
+                  <div className="h-3 w-28 rounded skeleton-pulse" />
+                  <div className="h-2.5 w-40 rounded skeleton-pulse" />
                 </div>
               </div>
             ))}
           </div>
         ) : displayed.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50">
+          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50">
               <Search className="h-5 w-5 text-muted-foreground/30" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">No conversations</p>
-            <p className="mt-1 text-xs text-muted-foreground/60">Try adjusting your filters</p>
+            <p className="mt-1.5 text-xs text-muted-foreground/50">Try adjusting your filters</p>
           </div>
         ) : (
-          <div className="p-2 space-y-px">
+          <div className="px-3 py-2 space-y-0.5">
             {displayed.map((conv) => {
               const isSelected  = conv.id === selectedId
               const last        = lastMessages[conv.id]
@@ -202,18 +202,18 @@ export function ConversationList({
                   key={conv.id}
                   onClick={() => onSelect(conv.id)}
                   className={cn(
-                    'w-full rounded-xl p-3 text-left transition-all duration-150 group',
+                    'w-full rounded-2xl px-3 py-3.5 text-left transition-all duration-150 group',
                     isSelected
-                      ? 'bg-primary/10 border border-primary/20'
-                      : 'border border-transparent hover:bg-accent',
-                    isResolved && !isSelected && 'opacity-60',
+                      ? 'bg-primary/10 border border-primary/15 shadow-sm'
+                      : 'border border-transparent hover:bg-accent/70',
+                    isResolved && !isSelected && 'opacity-55',
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3.5">
                     {/* Avatar + status badge */}
                     <div className="relative shrink-0">
                       <div className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold',
+                        'flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold',
                         isResolved ? 'opacity-50' : '',
                         avatarColor
                       )}>
@@ -221,12 +221,12 @@ export function ConversationList({
                       </div>
                       {/* Resolved badge overrides AI/Human badge */}
                       {isResolved ? (
-                        <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar bg-muted shadow-sm">
+                        <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar bg-muted shadow-sm">
                           <CheckCheck className="h-2.5 w-2.5 text-muted-foreground" />
                         </span>
                       ) : (
                         <span className={cn(
-                          'absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar shadow-sm',
+                          'absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar shadow-sm',
                           conv.is_ai_active ? 'bg-success' : 'bg-muted-foreground/50'
                         )}>
                           {conv.is_ai_active
@@ -240,14 +240,14 @@ export function ConversationList({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Name + time */}
-                      <div className="flex items-baseline justify-between gap-1 mb-1">
+                      <div className="flex items-baseline justify-between gap-2 mb-1.5">
                         <span className={cn(
-                          'truncate text-[13px] font-semibold leading-none',
+                          'truncate text-sm font-semibold leading-none',
                           isResolved ? 'text-muted-foreground' : 'text-foreground'
                         )}>
                           {conv.customer_name ?? conv.customer_phone ?? 'Unknown'}
                         </span>
-                        <span className="shrink-0 text-[10px] text-muted-foreground/50 leading-none">
+                        <span className="shrink-0 text-[11px] text-muted-foreground/40 leading-none font-medium">
                           {isResolved && conv.resolved_at
                             ? timeAgo(conv.resolved_at)
                             : timeAgo(conv.updated_at)}
@@ -256,22 +256,22 @@ export function ConversationList({
 
                       {/* Resolved label OR sender icon + message preview */}
                       {isResolved ? (
-                        <div className="flex items-center gap-1">
-                          <CheckCheck className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-                          <p className="text-[11px] text-muted-foreground/50 italic">Resolved</p>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCheck className="h-3 w-3 shrink-0 text-muted-foreground/30" />
+                          <p className="text-xs text-muted-foreground/40 italic">Resolved</p>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 min-w-0">
                           {last?.role === 'assistant' && (
-                            <Bot className="h-3 w-3 shrink-0 text-primary/70" />
+                            <Bot className="h-3 w-3 shrink-0 text-primary/60" />
                           )}
                           {last?.role === 'agent' && (
-                            <User className="h-3 w-3 shrink-0 text-warning/80" />
+                            <User className="h-3 w-3 shrink-0 text-warning/70" />
                           )}
                           {(!last || last.role === 'user') && (
-                            <MessageCircle className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                            <MessageCircle className="h-3 w-3 shrink-0 text-muted-foreground/35" />
                           )}
-                          <p className="truncate text-[11px] text-muted-foreground">
+                          <p className="truncate text-xs text-muted-foreground/70">
                             {last?.content ?? 'No messages yet'}
                           </p>
                         </div>
