@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Info, X } from 'lucide-react'
+import { Info, X, CheckCheck, RotateCcw } from 'lucide-react'
 import { ConversationList } from './ConversationList'
 import { ChatWindow } from './ChatWindow'
 import { ConversationDetails } from './ConversationDetails'
@@ -118,7 +118,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
 
   return (
     <div className="flex h-full font-agent pt-14 lg:pt-0">
-      {/* Panel 1 — Conversation list (full width on mobile when no convo selected) */}
+      {/* Panel 1 — Conversation list */}
       <div className={`${showList ? 'flex' : 'hidden'} lg:flex w-full lg:w-auto flex-col`}>
         <ConversationList
           conversations={filtered}
@@ -133,27 +133,79 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
         />
       </div>
 
-      {/* Panel 2 + 3 — Chat + details (full width on mobile when convo selected) */}
-      <div className={`${showChat ? 'flex' : 'hidden'} lg:flex flex-1 flex-col lg:flex-row min-w-0 h-full`}>
-        {/* Mobile top bar — back + info */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-2 border-b border-border/50 bg-card shrink-0">
-          <button
-            onClick={() => setSelectedId(null)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground"
-          >
-            ← Back
-          </button>
-          {selectedConv && (
+      {/* ── Mobile full-screen chat overlay ──────────────────────────────── */}
+      {showChat && (
+        <div className="fixed inset-0 z-30 flex flex-col bg-background lg:hidden">
+          {/* Mobile top bar — back · name · resolve · info */}
+          <div className="shrink-0 flex items-center gap-2 h-14 px-3 border-b border-border/50 bg-sidebar/95 backdrop-blur-md">
             <button
-              onClick={() => setDetailsOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
-              aria-label="Conversation details"
+              onClick={() => setSelectedId(null)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
+              aria-label="Back"
             >
-              <Info className="h-4 w-4" />
+              <span className="text-lg leading-none">←</span>
             </button>
-          )}
-        </div>
 
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-sm font-semibold leading-none">
+                {selectedConv?.customer_name ?? selectedConv?.customer_phone ?? 'Conversation'}
+              </p>
+              {selectedConv?.customer_name && selectedConv?.customer_phone && (
+                <p className="mt-0.5 text-[11px] text-muted-foreground/60 truncate">
+                  {selectedConv.customer_phone}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {selectedConv && (
+                selectedConv.status === 'resolved' ? (
+                  <button
+                    onClick={() => handleResolve(selectedConv.id, true)}
+                    className="flex items-center gap-1 rounded-xl border border-border/60 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reopen
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleResolve(selectedConv.id)}
+                    className="flex items-center gap-1 rounded-xl bg-success/10 border border-success/20 px-2.5 py-1.5 text-xs font-medium text-success hover:bg-success/20 transition-colors"
+                  >
+                    <CheckCheck className="h-3 w-3" />
+                    Resolve
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => setDetailsOpen(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
+                aria-label="Details"
+              >
+                <Info className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Messages + input */}
+          <ChatWindow
+            messages={messages}
+            isLoading={msgLoading}
+            isAiActive={selectedConv?.is_ai_active ?? true}
+            aiEnabled={aiEnabled}
+            isResolved={selectedConv?.status === 'resolved'}
+            isSending={isSending}
+            onSend={handleSend}
+            onResolve={handleResolve}
+            conversationId={selectedId}
+            customerName={selectedConv?.customer_name}
+            customerPhone={selectedConv?.customer_phone}
+          />
+        </div>
+      )}
+
+      {/* ── Desktop Panel 2 + 3 ───────────────────────────────────────────── */}
+      <div className="hidden lg:flex flex-1 flex-col lg:flex-row min-w-0 h-full">
         <ChatWindow
           messages={messages}
           isLoading={msgLoading}
@@ -167,8 +219,6 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
           customerName={selectedConv?.customer_name}
           customerPhone={selectedConv?.customer_phone}
         />
-
-        {/* Details panel hidden on mobile to save space */}
         <div className="hidden lg:flex h-full">
           <ConversationDetails
             conversation={selectedConv}

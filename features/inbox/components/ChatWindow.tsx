@@ -96,8 +96,8 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
   return (
     <div className="flex flex-1 flex-col chat-pattern-bg min-w-0">
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between h-14 px-4 border-b border-border/50 bg-sidebar/80 backdrop-blur-md">
+      {/* ── Header — desktop only (mobile uses InboxShell top bar) ── */}
+      <div className="hidden lg:flex shrink-0 items-center justify-between h-14 px-4 border-b border-border/50 bg-sidebar/80 backdrop-blur-md">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold leading-none">
             {customerName ?? customerPhone ?? 'Unknown'}
@@ -153,7 +153,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
                 <div className="h-px flex-1 bg-border/40" />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2.5">
                 {group.messages.map((msg) => {
                   if (msg.role === 'system') {
                     return (
