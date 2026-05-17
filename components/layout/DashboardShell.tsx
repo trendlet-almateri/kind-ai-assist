@@ -20,7 +20,7 @@ export function DashboardShell({ profile, aiEnabled, children }: DashboardShellP
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <AppSidebar
         profile={profile}
         aiEnabled={aiEnabled}
@@ -30,7 +30,7 @@ export function DashboardShell({ profile, aiEnabled, children }: DashboardShellP
 
       {/* Main content — no padding on mobile, dynamic on lg+ based on sidebar width */}
       <main
-        className={`flex-1 min-h-screen transition-[padding] duration-200 w-full ${
+        className={`flex-1 h-full overflow-auto transition-[padding] duration-200 w-full ${
           collapsed ? 'lg:pl-[72px]' : 'lg:pl-[260px]'
         }`}
       >

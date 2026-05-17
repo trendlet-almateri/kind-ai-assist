@@ -95,7 +95,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
   const showChat = !!selectedId
 
   return (
-    <div className="flex h-screen font-agent pt-14 lg:pt-0">
+    <div className="flex h-full font-agent pt-14 lg:pt-0">
       {/* Panel 1 — Conversation list (full width on mobile when no convo selected) */}
       <div className={`${showList ? 'flex' : 'hidden'} lg:flex w-full lg:w-auto flex-col`}>
         <ConversationList
