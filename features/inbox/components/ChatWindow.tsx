@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck } from 'lucide-react'
+import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, getDateLabel, formatTime } from '@/lib/utils'
 import type { Message } from '@/types/database'
@@ -14,7 +14,10 @@ interface Props {
   isResolved:         boolean
   isSending:          boolean
   onSend:             (content: string) => Promise<void>
+  onResolve?:         (id: string, reopen?: boolean) => void
   conversationId:     string | null
+  customerName?:      string | null
+  customerPhone?:     string | null
 }
 
 /** Detect if text is primarily RTL (Arabic, Hebrew, etc.) */
@@ -23,7 +26,7 @@ function isRTL(text: string): boolean {
   return rtlRegex.test(text)
 }
 
-export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResolved, isSending, onSend, conversationId }: Props) {
+export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResolved, isSending, onSend, onResolve, conversationId, customerName, customerPhone }: Props) {
   // Input is locked only when AI is BOTH per-conversation active AND globally enabled
   const inputLocked = isAiActive && aiEnabled
   const [input, setInput] = useState('')
@@ -92,6 +95,39 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
 
   return (
     <div className="flex flex-1 flex-col chat-pattern-bg min-w-0">
+
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="shrink-0 flex items-center justify-between h-14 px-4 border-b border-border/50 bg-sidebar/80 backdrop-blur-md">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold leading-none">
+            {customerName ?? customerPhone ?? 'Unknown'}
+          </p>
+          {customerName && customerPhone && (
+            <p className="mt-1 text-[11px] text-muted-foreground/60 truncate">{customerPhone}</p>
+          )}
+        </div>
+
+        {conversationId && onResolve && (
+          isResolved ? (
+            <button
+              onClick={() => onResolve(conversationId, true)}
+              className="flex items-center gap-1.5 rounded-xl border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reopen
+            </button>
+          ) : (
+            <button
+              onClick={() => onResolve(conversationId)}
+              className="flex items-center gap-1.5 rounded-xl bg-success/10 border border-success/20 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/20 transition-colors"
+            >
+              <CheckCheck className="h-3.5 w-3.5" />
+              Resolve
+            </button>
+          )
+        )}
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5">
         {isLoading ? (
