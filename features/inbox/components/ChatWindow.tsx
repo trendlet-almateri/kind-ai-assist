@@ -14,10 +14,7 @@ interface Props {
   isResolved:         boolean
   isSending:          boolean
   onSend:             (content: string) => Promise<void>
-  onResolve?:         (id: string, reopen?: boolean) => void
   conversationId:     string | null
-  customerName?:      string | null
-  customerPhone?:     string | null
 }
 
 /** Detect if text is primarily RTL (Arabic, Hebrew, etc.) */
@@ -26,7 +23,7 @@ function isRTL(text: string): boolean {
   return rtlRegex.test(text)
 }
 
-export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResolved, isSending, onSend, onResolve, conversationId, customerName, customerPhone }: Props) {
+export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResolved, isSending, onSend, conversationId }: Props) {
   // Input is locked only when AI is BOTH per-conversation active AND globally enabled
   const inputLocked = isAiActive && aiEnabled
   const [input, setInput] = useState('')
@@ -96,17 +93,6 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
   return (
     <div className="flex flex-1 flex-col chat-pattern-bg min-w-0">
 
-      {/* ── Header — desktop only (mobile uses InboxShell top bar) ── */}
-      <div className="hidden lg:flex shrink-0 items-center h-14 px-4 border-b border-border/50 bg-sidebar/80 backdrop-blur-md">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-none">
-            {customerName ?? customerPhone ?? 'Unknown'}
-          </p>
-          {customerName && customerPhone && (
-            <p className="mt-1 text-[11px] text-muted-foreground/60 truncate">{customerPhone}</p>
-          )}
-        </div>
-      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5">

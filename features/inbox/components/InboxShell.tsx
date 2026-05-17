@@ -103,7 +103,10 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
   const handleResolve = useCallback(
     (id: string, reopen = false) => {
       const workspaceId = conversations.find((c) => c.id === id)?.workspace_id ?? ''
-      resolveConversation.mutate({ conversationId: id, agentId: profile.id, workspaceId, reopen })
+      resolveConversation.mutate(
+        { conversationId: id, agentId: profile.id, workspaceId, reopen },
+        { onSuccess: () => { if (!reopen) setSelectedId(null) } }
+      )
     },
     [resolveConversation, profile.id, conversations]
   )
@@ -175,10 +178,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
             isResolved={selectedConv?.status === 'resolved'}
             isSending={isSending}
             onSend={handleSend}
-            onResolve={handleResolve}
             conversationId={selectedId}
-            customerName={selectedConv?.customer_name}
-            customerPhone={selectedConv?.customer_phone}
           />
         </div>
       )}
