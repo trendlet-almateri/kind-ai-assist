@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { AlertTriangle, Globe, MessageCircle } from 'lucide-react'
-import { timeAgo } from '@/lib/utils'
+import { cn, timeAgo } from '@/lib/utils'
 
 interface EscalationRow {
   id: string
@@ -16,12 +16,15 @@ interface EscalationsTableProps {
 
 export function EscalationsTable({ data }: EscalationsTableProps) {
   return (
-    <div className="glass-card p-6">
+    <div className="rounded-xl border border-border/50 bg-card/60 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-base">Recent Escalations</h2>
+        <div>
+          <h2 className="text-sm font-semibold tracking-tight">Recent Escalations</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground/60">{data.length} requiring attention</p>
+        </div>
         <Link
           href="/inbox?filter=needs_review"
-          className="text-xs text-primary hover:text-primary/80 transition-colors"
+          className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
         >
           View all →
         </Link>
@@ -29,39 +32,42 @@ export function EscalationsTable({ data }: EscalationsTableProps) {
 
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <AlertTriangle className="h-8 w-8 text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">No escalations</p>
+          <AlertTriangle className="h-6 w-6 text-muted-foreground/20 mb-2" />
+          <p className="text-xs text-muted-foreground/50">No escalations</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y divide-border/40">
           {data.map((row) => (
             <Link
               key={row.id}
               href={`/inbox?id=${row.id}`}
-              className="flex items-center gap-3 rounded-xl border border-border/50 bg-surface/50 px-4 py-3 hover:border-primary/30 hover:bg-surface transition-all duration-150"
+              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 group hover:opacity-80 transition-opacity duration-100"
             >
               {/* Channel icon */}
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+              <div className={cn(
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+                row.channel === 'whatsapp' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
+              )}>
                 {row.channel === 'whatsapp'
-                  ? <MessageCircle className="h-4 w-4" />
-                  : <Globe className="h-4 w-4" />
+                  ? <MessageCircle className="h-3.5 w-3.5" />
+                  : <Globe className="h-3.5 w-3.5" />
                 }
               </div>
 
               {/* Details */}
               <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium">
+                <p className="truncate text-sm font-medium leading-snug">
                   {row.customer_name ?? 'Unknown customer'}
                 </p>
                 {row.escalation_reason && (
-                  <p className="truncate text-xs text-muted-foreground mt-0.5">
+                  <p className="truncate text-[11px] text-muted-foreground/60 mt-0.5">
                     {row.escalation_reason}
                   </p>
                 )}
               </div>
 
               {/* Time */}
-              <span className="shrink-0 text-xs text-muted-foreground">
+              <span className="shrink-0 text-[11px] text-muted-foreground/40 tabular-nums">
                 {timeAgo(row.created_at)}
               </span>
             </Link>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Bot, MessageSquare, Zap, AlertTriangle } from 'lucide-react'
+import { Bot, MessageSquare, Zap, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { KpiData, PeriodValues } from '@/types'
 
@@ -38,26 +38,25 @@ function KpiCard({ label, icon: Icon, values, period, format, accent }: KpiCardP
   const display  = format ? format(value) : value.toLocaleString()
 
   return (
-    <div className="stat-card">
+    <div className="stat-card !p-5">
       <div className="flex items-start justify-between">
         <div className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-xl',
+          'flex h-8 w-8 items-center justify-center rounded-md',
           accent ?? 'bg-primary/10 text-primary'
         )}>
-          <Icon className="h-4 w-4" />
+          <Icon className="h-3.5 w-3.5" />
         </div>
         <span className={cn(
-          'flex items-center gap-1 text-xs font-semibold',
+          'text-[11px] font-medium tabular-nums',
           isUp ? 'text-success' : 'text-destructive'
         )}>
-          {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          {Math.abs(change)}%
+          {isUp ? '+' : ''}{change}%
         </span>
       </div>
 
-      <div className="mt-4">
-        <p className="font-heading text-3xl text-gradient">{display}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{label}</p>
+      <div className="mt-5">
+        <p className="text-2xl font-semibold tracking-tight text-foreground">{display}</p>
+        <p className="mt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">{label}</p>
       </div>
     </div>
   )
@@ -79,15 +78,15 @@ export function KpiCards({ data }: KpiCardsProps) {
   return (
     <div>
       {/* Period toggle */}
-      <div className="mb-4 flex items-center gap-1 rounded-xl border border-border/50 bg-card p-1 w-fit">
+      <div className="mb-3 flex items-center gap-0.5 rounded-lg border border-border/50 bg-card/60 p-0.5 w-fit">
         {periods.map((p) => (
           <button
             key={p.key}
             onClick={() => setPeriod(p.key)}
             className={cn(
-              'rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+              'rounded-md px-3 py-1.5 text-[11px] font-medium transition-all duration-150',
               period === p.key
-                ? 'bg-primary/15 text-primary'
+                ? 'bg-accent text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -96,7 +95,7 @@ export function KpiCards({ data }: KpiCardsProps) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Conversations"
           icon={MessageSquare}
@@ -120,24 +119,21 @@ export function KpiCards({ data }: KpiCardsProps) {
           accent="bg-chart-blue/10 text-chart-blue"
         />
         {/* Escalations — uses its own data shape */}
-        <div className="stat-card">
+        <div className="stat-card !p-5">
           <div className="flex items-start justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
-              <AlertTriangle className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-warning/10 text-warning">
+              <AlertTriangle className="h-3.5 w-3.5" />
             </div>
             <span className={cn(
-              'flex items-center gap-1 text-xs font-semibold',
+              'text-[11px] font-medium',
               data.escalationsToday > data.escalationsYesterday ? 'text-destructive' : 'text-success'
             )}>
-              {data.escalationsToday > data.escalationsYesterday
-                ? <TrendingUp className="h-3 w-3" />
-                : <TrendingDown className="h-3 w-3" />}
               vs yesterday
             </span>
           </div>
-          <div className="mt-4">
-            <p className="font-heading text-3xl text-gradient">{data.escalationsToday}</p>
-            <p className="mt-1 text-sm text-muted-foreground">Escalations Today</p>
+          <div className="mt-5">
+            <p className="text-2xl font-semibold tracking-tight text-foreground">{data.escalationsToday}</p>
+            <p className="mt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">Escalations Today</p>
           </div>
         </div>
       </div>

@@ -48,12 +48,12 @@ export default async function DashboardPage() {
     ])
 
   return (
-    <div className="space-y-6 p-4 pt-16 lg:p-6 lg:pt-6">
+    <div className="space-y-5 p-4 pt-16 lg:p-6 lg:pt-6">
       {/* Header */}
       <div>
-        <h1 className="font-heading text-3xl">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground" style={{ opacity: 'var(--text-secondary)' }}>
-          Overview of your support operations
+        <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground/70">
+          Support operations overview
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
       <KpiCards data={kpis} />
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <ConversationsChart data={convOverTime} />
         </div>
@@ -72,7 +72,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <EscalationsTable data={escalations} />
         <AgentActivityList data={agentActivity} />
       </div>
