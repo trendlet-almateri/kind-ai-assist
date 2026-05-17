@@ -156,25 +156,22 @@ async function processInbound(opts: {
     conversationId = existingConv.id
     workspaceId = existingConv.workspace_id
 
-    // Reopen resolved conversations automatically
+    // Reopen resolved conversations automatically when customer messages again
     if (existingConv.status === 'resolved') {
-      const now = new Date().toISOString()
-      await db.from('conversations').update({
+      const { error: reopenErr } = await db.from('conversations').update({
         status: 'open',
         is_ai_active: true,
         assigned_agent: null,
         resolved_at: null,
-        updated_at: now,
+        updated_at: new Date().toISOString(),
       }).eq('id', conversationId)
 
-      await db.from('takeover_events').insert({
-        conversation_id: conversationId,
-        workspace_id: workspaceId,
-        agent_id: '00000000-0000-0000-0000-000000000000', // system actor
-        event_type: 'conversation_reopened',
-        note: 'Reopened automatically — customer sent a new message',
-      })
-      console.log('[Twilio Webhook] step1 reopened resolved conversation', { conversationId })
+      if (reopenErr) {
+        console.error('[Twilio Webhook] step1 reopen-resolved failed:', reopenErr)
+      } else {
+        console.log('[Twilio Webhook] step1 reopened resolved conversation', { conversationId })
+      }
+      // No takeover_event inserted here — no real agent actor (Twilio-triggered)
     }
 
     if (!existingConv.customer_name && profileName) {
