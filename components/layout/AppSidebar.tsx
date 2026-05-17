@@ -138,24 +138,24 @@ export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSid
           <div className={cn(
             'relative overflow-hidden rounded-xl px-3.5 py-3 transition-all duration-500',
             aiEnabled
-              ? 'bg-gradient-to-r from-primary/[0.08] to-primary/[0.03] border border-primary/15'
+              ? 'bg-gradient-to-r from-success/[0.10] to-success/[0.03] border border-success/20'
               : 'bg-gradient-to-r from-destructive/[0.06] to-transparent border border-destructive/15'
           )}>
             <div className={cn(
               'absolute -top-3 -right-3 h-12 w-12 rounded-full blur-xl transition-colors duration-500',
-              aiEnabled ? 'bg-primary/15' : 'bg-destructive/10'
+              aiEnabled ? 'bg-success/20' : 'bg-destructive/10'
             )} />
             <div className="relative flex items-center gap-2.5">
               <span className={cn(
                 'flex h-2 w-2 shrink-0 rounded-full',
                 aiEnabled
-                  ? 'bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.6)] animate-pulse-glow'
+                  ? 'bg-success shadow-[0_0_6px_hsl(var(--success)/0.7)] animate-pulse-glow'
                   : 'bg-destructive/70'
               )} />
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   'text-[11px] font-bold leading-none',
-                  aiEnabled ? 'text-primary' : 'text-destructive/80'
+                  aiEnabled ? 'text-success' : 'text-destructive/80'
                 )}>
                   {aiEnabled ? 'Bot Active' : 'Bot Inactive'}
                 </p>

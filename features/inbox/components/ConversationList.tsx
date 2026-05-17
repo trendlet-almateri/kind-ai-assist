@@ -223,7 +223,7 @@ export function ConversationList({
                       ) : (
                         <span className={cn(
                           'absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar shadow-sm',
-                          conv.is_ai_active ? 'bg-primary' : 'bg-destructive/80'
+                          conv.is_ai_active ? 'bg-success' : 'bg-muted-foreground/50'
                         )}>
                           {conv.is_ai_active
                             ? <Bot className="h-2.5 w-2.5 text-white" />
