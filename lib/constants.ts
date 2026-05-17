@@ -44,6 +44,3 @@ export const ROUTES = {
   settings:  '/settings',
 } as const
 
-// ── WhatsApp API ──────────────────────────────────────
-export const WHATSAPP_API_VERSION = 'v19.0'
-export const WHATSAPP_API_BASE    = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`
