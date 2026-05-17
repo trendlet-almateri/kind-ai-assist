@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Info, X, CheckCheck, RotateCcw } from 'lucide-react'
+import { Info, X } from 'lucide-react'
 import { ConversationList } from './ConversationList'
 import { ChatWindow } from './ChatWindow'
 import { ConversationDetails } from './ConversationDetails'
@@ -157,34 +157,13 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
-              {selectedConv && (
-                selectedConv.status === 'resolved' ? (
-                  <button
-                    onClick={() => handleResolve(selectedConv.id, true)}
-                    className="flex items-center gap-1 rounded-xl border border-border/60 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    Reopen
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleResolve(selectedConv.id)}
-                    className="flex items-center gap-1 rounded-xl bg-success/10 border border-success/20 px-2.5 py-1.5 text-xs font-medium text-success hover:bg-success/20 transition-colors"
-                  >
-                    <CheckCheck className="h-3 w-3" />
-                    Resolve
-                  </button>
-                )
-              )}
-              <button
-                onClick={() => setDetailsOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
-                aria-label="Details"
-              >
-                <Info className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              onClick={() => setDetailsOpen(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
+              aria-label="Details"
+            >
+              <Info className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Messages + input */}
