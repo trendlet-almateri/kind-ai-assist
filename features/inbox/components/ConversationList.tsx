@@ -65,10 +65,11 @@ export function ConversationList({
   }
 
   return (
-    <div className="flex h-full w-[300px] shrink-0 flex-col border-r border-border/50 bg-sidebar">
+    <div className="flex h-full w-full lg:w-[300px] shrink-0 flex-col border-r border-border/50 bg-sidebar">
 
       {/* ── Header ───────────────────────────────────────────── */}
-      <div className="flex h-14 shrink-0 items-center justify-between px-4 border-b border-border/50">
+      {/* pl-14 on mobile = space for the AppSidebar hamburger (fixed top-4 left-4) */}
+      <div className="flex h-14 shrink-0 items-center justify-between pl-14 pr-4 lg:px-4 border-b border-border/50">
         <div className="flex items-center gap-2.5">
           <h2 className="font-heading text-base tracking-tight">Inbox</h2>
           {unreadCount > 0 && (
