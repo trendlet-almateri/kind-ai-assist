@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Info, X } from 'lucide-react'
 import { ConversationList } from './ConversationList'
 import { ChatWindow } from './ChatWindow'
 import { ConversationDetails } from './ConversationDetails'
@@ -27,6 +28,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
   const [filter, setFilter]           = useState<ConvFilter>(initialFilter)
   const [search, setSearch]           = useState('')
   const [isSending, setIsSending]     = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: conversations = [], isLoading: convLoading } =
@@ -113,13 +115,24 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
 
       {/* Panel 2 + 3 — Chat + details (full width on mobile when convo selected) */}
       <div className={`${showChat ? 'flex' : 'hidden'} lg:flex flex-1 flex-col lg:flex-row min-w-0 h-full`}>
-        {/* Back button on mobile */}
-        <button
-          onClick={() => setSelectedId(null)}
-          className="lg:hidden flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground border-b border-border/50 bg-card shrink-0"
-        >
-          ← Back to conversations
-        </button>
+        {/* Mobile top bar — back + info */}
+        <div className="lg:hidden flex items-center justify-between px-4 py-2 border-b border-border/50 bg-card shrink-0">
+          <button
+            onClick={() => setSelectedId(null)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground"
+          >
+            ← Back
+          </button>
+          {selectedConv && (
+            <button
+              onClick={() => setDetailsOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent active:bg-accent/80 transition-colors"
+              aria-label="Conversation details"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         <ChatWindow
           messages={messages}
@@ -144,6 +157,52 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
           />
         </div>
       </div>
+
+      {/* ── Mobile bottom sheet — ConversationDetails ──────────────────── */}
+      {detailsOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setDetailsOpen(false)}
+          />
+
+          {/* Sheet */}
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 lg:hidden flex flex-col rounded-t-2xl bg-sidebar shadow-2xl overflow-hidden"
+            style={{ maxHeight: '85dvh' }}
+          >
+            {/* Drag handle + header */}
+            <div className="shrink-0 px-4 pt-3 pb-2">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border/60" />
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-foreground">Details</p>
+                <button
+                  onClick={() => setDetailsOpen(false)}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
+              <ConversationDetails
+                conversation={selectedConv}
+                takeoverEvents={takeoverEvents}
+                agents={agents}
+                agentId={profile.id}
+                aiEnabled={aiEnabled}
+                isAdmin={profile.role === 'admin'}
+                onToggleAI={toggleAI}
+                onUpdateConversation={handleUpdateConversation}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
