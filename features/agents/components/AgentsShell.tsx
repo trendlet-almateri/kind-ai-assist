@@ -172,8 +172,8 @@ export function AgentsShell({ agents, currentUserId }: Props) {
       </div>
 
       {/* Table */}
-      <div className="glass-card overflow-x-auto">
-        <table className="w-full min-w-[500px] text-sm">
+      <div className="glass-card overflow-hidden">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50">
               {['Agent', 'Role', 'Status', 'Assigned', ''].map((h, i) => (
@@ -225,7 +225,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
                 <td className="px-4 py-3.5 text-right">
                   <button
                     onClick={() => setSelectedAgent(agent)}
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground/50 hover:text-foreground hover:bg-accent transition-colors opacity-0 group-hover:opacity-100"
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-primary hover:bg-primary/10 transition-colors"
                     title="View details"
                   >
                     <Eye className="h-4 w-4" />
