@@ -96,11 +96,10 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
   }
 
   return (
-    <div className="flex flex-1 flex-col chat-pattern-bg min-w-0">
-
+    <div className="flex flex-1 flex-col chat-pattern-bg min-w-0 min-h-0">
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5">
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar px-5 py-5">
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
