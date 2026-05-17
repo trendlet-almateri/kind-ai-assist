@@ -160,7 +160,6 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
             conversation={selectedConv}
             takeoverEvents={takeoverEvents}
             agents={agents}
-            agentId={profile.id}
             aiEnabled={aiEnabled}
             isAdmin={profile.role === 'admin'}
             onToggleAI={toggleAI}
@@ -204,7 +203,6 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
                 conversation={selectedConv}
                 takeoverEvents={takeoverEvents}
                 agents={agents}
-                agentId={profile.id}
                 aiEnabled={aiEnabled}
                 isAdmin={profile.role === 'admin'}
                 onToggleAI={toggleAI}

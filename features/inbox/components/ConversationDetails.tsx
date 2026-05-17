@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  Bot, User, UserCheck, Shield, AlertTriangle,
+  UserCheck, Shield, AlertTriangle,
   CheckCircle2, Activity, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Phone, Sparkles, Check,
 } from 'lucide-react'
@@ -15,7 +15,6 @@ interface Props {
   conversation:         Conversation | null
   takeoverEvents:       TakeoverEvent[]
   agents:               AgentProfile[]
-  agentId?:             string
   aiEnabled:            boolean
   isAdmin:              boolean
   onToggleAI:           (id: string, active: boolean) => void
@@ -40,13 +39,16 @@ function SectionCard({ icon: Icon, label, children, className }: {
 }
 
 export function ConversationDetails({
-  conversation, takeoverEvents, agents, agentId, aiEnabled, isAdmin,
+  conversation, takeoverEvents, agents, aiEnabled, isAdmin,
   onToggleAI, onUpdateConversation,
 }: Props) {
   const [activityPage, setActivityPage]     = useState(0)
   const [activityOpen, setActivityOpen]     = useState(true)
   const [agentDropOpen, setAgentDropOpen]   = useState(false)
   const agentDropRef                        = useRef<HTMLDivElement>(null)
+
+  // Reset activity page when the selected conversation changes
+  useEffect(() => { setActivityPage(0) }, [conversation?.id])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -70,9 +72,12 @@ export function ConversationDetails({
     )
   }
 
-  const avatarColor = getAvatarColor(conversation.id)
-  const initial     = getInitial(conversation.customer_name, conversation.customer_phone)
-  const totalPages  = Math.ceil(takeoverEvents.length / ACTIVITY_PAGE_SIZE)
+  const avatarColor   = getAvatarColor(conversation.id)
+  const initial       = getInitial(conversation.customer_name, conversation.customer_phone)
+  const totalPages    = Math.ceil(takeoverEvents.length / ACTIVITY_PAGE_SIZE)
+  // "Recently active" = last update within 30 minutes
+  const recentlyActive = Date.now() - new Date(conversation.updated_at).getTime() < 30 * 60 * 1000
+  const isWhatsApp     = conversation.channel === 'whatsapp'
   const pagedEvents = takeoverEvents.slice(
     activityPage * ACTIVITY_PAGE_SIZE,
     (activityPage + 1) * ACTIVITY_PAGE_SIZE
@@ -90,7 +95,9 @@ export function ConversationDetails({
           )}>
             {initial}
           </div>
-          <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-sidebar bg-success" />
+          {recentlyActive && (
+            <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-sidebar bg-success" />
+          )}
         </div>
 
         <p className="text-sm font-bold text-foreground text-center leading-tight">
@@ -103,7 +110,7 @@ export function ConversationDetails({
           </div>
         )}
 
-        {conversation.customer_phone && (
+        {isWhatsApp && (
           <div className="mt-3 flex items-center gap-1.5 rounded-full bg-[#25D366]/15 border border-[#25D366]/25 px-4 py-1.5 text-xs font-semibold text-[#25D366] uppercase tracking-wide select-none">
             {/* Official WhatsApp SVG icon */}
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-[#25D366]" xmlns="http://www.w3.org/2000/svg">
