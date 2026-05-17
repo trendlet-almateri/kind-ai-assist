@@ -113,7 +113,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
     <div className="p-4 pt-16 lg:p-8 lg:pt-8 font-agent min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-heading text-3xl">Workspace &amp; AI</h1>
+        <h1 className="font-heading text-2xl leading-none">Workspace &amp; AI</h1>
       </div>
 
       {/* Two-column grid */}

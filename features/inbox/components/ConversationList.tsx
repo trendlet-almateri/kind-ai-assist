@@ -69,8 +69,8 @@ export function ConversationList({
 
       {/* ── Header ───────────────────────────────────────────── */}
       {/* pl-16 on mobile = extra breathing room after the AppSidebar hamburger */}
-      <div className="flex h-16 shrink-0 items-center gap-3 pl-16 pr-4 lg:px-4">
-        <span className="text-[15px] font-semibold leading-none tracking-[-0.01em] text-foreground">Inbox</span>
+      <div className="flex h-16 shrink-0 items-center justify-center gap-3 lg:justify-start lg:px-5">
+        <h2 className="font-heading text-2xl leading-none">Inbox</h2>
         {isLoading ? (
           <span className="h-[22px] w-8 rounded-full skeleton-pulse" />
         ) : (

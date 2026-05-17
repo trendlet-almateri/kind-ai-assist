@@ -157,7 +157,7 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
 
       {/* Header */}
       <div>
-        <h1 className="font-heading text-3xl">Knowledge Base</h1>
+        <h1 className="font-heading text-2xl leading-none">Knowledge Base</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           AI-powered knowledge sources for automated responses
         </p>
