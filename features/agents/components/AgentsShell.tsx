@@ -176,8 +176,8 @@ export function AgentsShell({ agents, currentUserId }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50">
-              {['Agent', 'Role', 'Status', 'Assigned', ''].map((h, i) => (
-                <th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
+              {['Agent', 'Role', 'Status'].map((h) => (
+                <th key={h} className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 first:text-left">
                   {h}
                 </th>
               ))}
@@ -185,9 +185,13 @@ export function AgentsShell({ agents, currentUserId }: Props) {
           </thead>
           <tbody>
             {paged.map((agent) => (
-              <tr key={agent.id} className="border-b border-border/30 hover:bg-accent/30 transition-colors group">
-                {/* Agent */}
-                <td className="px-4 py-3.5">
+              <tr
+                key={agent.id}
+                onClick={() => setSelectedAgent(agent)}
+                className="border-b border-border/30 hover:bg-accent/40 transition-colors cursor-pointer"
+              >
+                {/* Agent — left aligned */}
+                <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 font-heading text-sm font-bold text-primary">
@@ -204,32 +208,17 @@ export function AgentsShell({ agents, currentUserId }: Props) {
                     </div>
                   </div>
                 </td>
-                {/* Role */}
-                <td className="px-4 py-3.5">
+                {/* Role — centered */}
+                <td className="px-4 py-4 text-center">
                   <span className={cn('badge-glow text-[11px]', ROLE_BADGE[agent.role])}>
                     {agent.role}
                   </span>
                 </td>
-                {/* Status */}
-                <td className="px-4 py-3.5">
+                {/* Status — centered */}
+                <td className="px-4 py-4 text-center">
                   <span className={cn('badge-glow text-[11px]', STATUS_BADGE[agent.status].cls)}>
                     {STATUS_BADGE[agent.status].label}
                   </span>
-                </td>
-                {/* Assigned */}
-                <td className="px-4 py-3.5">
-                  <span className="text-sm font-semibold text-foreground">{agent.assigned_conversations}</span>
-                  <span className="ml-1 text-[11px] text-muted-foreground/50">conv.</span>
-                </td>
-                {/* Eye */}
-                <td className="px-4 py-3.5 text-right">
-                  <button
-                    onClick={() => setSelectedAgent(agent)}
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-primary hover:bg-primary/10 transition-colors"
-                    title="View details"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
                 </td>
               </tr>
             ))}
