@@ -67,7 +67,7 @@ export function ConversationDetails({
   )
 
   return (
-    <div className="flex w-[260px] shrink-0 flex-col border-l border-border/50 bg-sidebar overflow-y-auto custom-scrollbar">
+    <div className="flex h-full w-[260px] shrink-0 flex-col border-l border-border/50 bg-sidebar overflow-y-auto custom-scrollbar">
 
       {/* ── Customer header ────────────────────────────────────── */}
       <div className="flex flex-col items-center px-4 pt-6 pb-5">

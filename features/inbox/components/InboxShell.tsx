@@ -131,7 +131,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
         />
 
         {/* Details panel hidden on mobile to save space */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex h-full">
           <ConversationDetails
             conversation={selectedConv}
             takeoverEvents={takeoverEvents}
