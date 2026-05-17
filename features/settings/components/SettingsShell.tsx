@@ -66,9 +66,10 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
   const router = useRouter()
 
   // ── Workspace state ───────────────────────────────────────────────────────
-  const [aiEnabled,    setAiEnabled]    = useState(settings?.ai_enabled         ?? true)
-  const [autoReturn,   setAutoReturn]   = useState(settings?.auto_return_enabled ?? true)
-  const [escalationOn, setEscalationOn] = useState(settings?.escalation_enabled  ?? true)
+  const [aiEnabled,      setAiEnabled]      = useState(settings?.ai_enabled              ?? true)
+  const [autoReturn,     setAutoReturn]     = useState(settings?.auto_return_enabled     ?? false)
+  const [autoReturnMins, setAutoReturnMins] = useState(settings?.auto_return_ai_minutes  ?? 5)
+  const [escalationOn,   setEscalationOn]   = useState(settings?.escalation_enabled      ?? true)
   const [showDisableConfirm, setShowDisableConfirm] = useState(false)
   const [savingSettings,     setSavingSettings]     = useState(false)
 
@@ -91,9 +92,10 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
   const handleSaveSettings = async () => {
     setSavingSettings(true)
     const fd = new FormData()
-    fd.set('ai_enabled',          String(aiEnabled))
-    fd.set('auto_return_enabled', String(autoReturn))
-    fd.set('escalation_enabled',  String(escalationOn))
+    fd.set('ai_enabled',             String(aiEnabled))
+    fd.set('auto_return_enabled',    String(autoReturn))
+    fd.set('auto_return_ai_minutes', String(autoReturnMins))
+    fd.set('escalation_enabled',     String(escalationOn))
     const result = await saveWorkspaceSettingsAction({}, fd)
     setSavingSettings(false)
     if (result.error) toast.error(result.error)
@@ -145,17 +147,34 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
             </div>
 
             {/* Auto-Return to AI */}
-            <div className="flex items-center justify-between py-4 border-b border-border/30">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-success">
-                  <Clock className="h-4 w-4" />
+            <div className="py-4 border-b border-border/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-success">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Auto-Return to AI</p>
+                    <p className="text-xs text-muted-foreground">Return after agent inactivity</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">Auto-Return to AI</p>
-                  <p className="text-xs text-muted-foreground">Return after agent inactivity</p>
-                </div>
+                <Toggle checked={autoReturn} onChange={setAutoReturn} />
               </div>
-              <Toggle checked={autoReturn} onChange={setAutoReturn} />
+              {/* Minutes input — only visible when enabled */}
+              {autoReturn && (
+                <div className="flex items-center gap-3 pl-12">
+                  <p className="text-xs text-muted-foreground">Return after</p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={autoReturnMins}
+                    onChange={(e) => setAutoReturnMins(Math.max(1, Number(e.target.value)))}
+                    className="w-16 rounded-lg border border-border/60 bg-input px-2 py-1 text-center text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  />
+                  <p className="text-xs text-muted-foreground">minutes of agent inactivity</p>
+                </div>
+              )}
             </div>
 
             {/* Escalation Detection */}

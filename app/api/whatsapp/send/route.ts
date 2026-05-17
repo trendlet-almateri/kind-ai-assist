@@ -69,16 +69,18 @@ export async function POST(req: NextRequest) {
       // Don't fail the request — message is saved, delivery is best-effort
     }
 
-    // Mark conversation as assigned if it was open
+    // Stamp agent_last_reply_at on every agent send (used by auto-return cron)
+    // Also assign if still open
     await supabase
       .from('conversations')
       .update({
-        status:         'assigned',
-        assigned_agent: session.profile.id,
-        unread_count:   0,
+        agent_last_reply_at: new Date().toISOString(),
+        status:              'assigned',
+        assigned_agent:      session.profile.id,
+        unread_count:        0,
+        updated_at:          new Date().toISOString(),
       })
       .eq('id', conversation_id)
-      .eq('status', 'open')   // only update if still open
 
     return NextResponse.json({ data: msg }, { status: 200 })
   } catch (err) {
