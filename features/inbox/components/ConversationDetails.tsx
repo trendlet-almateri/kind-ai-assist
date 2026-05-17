@@ -250,7 +250,7 @@ export function ConversationDetails({
         {/* Take Over / Return button */}
         <button
           onClick={() => onToggleAI(conversation.id, conversation.is_ai_active)}
-          disabled={!aiEnabled || isResolved}
+          disabled={isResolved}
           className={cn(
             'w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold',
             'border transition-all duration-150 active:scale-[0.98]',
@@ -262,9 +262,9 @@ export function ConversationDetails({
           {conversation.is_ai_active ? 'Take Over Conversation' : 'Return to AI'}
         </button>
 
-        {!aiEnabled && (
+        {!aiEnabled && conversation.is_ai_active && (
           <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
-            AI is globally disabled
+            AI is globally disabled — taking over enables manual reply
           </p>
         )}
       </SectionCard>

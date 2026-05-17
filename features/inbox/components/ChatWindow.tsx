@@ -10,6 +10,7 @@ interface Props {
   messages:           Message[]
   isLoading:          boolean
   isAiActive:         boolean
+  aiEnabled:          boolean
   isResolved:         boolean
   isSending:          boolean
   onSend:             (content: string) => Promise<void>
@@ -22,7 +23,9 @@ function isRTL(text: string): boolean {
   return rtlRegex.test(text)
 }
 
-export function ChatWindow({ messages, isLoading, isAiActive, isResolved, isSending, onSend, conversationId }: Props) {
+export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResolved, isSending, onSend, conversationId }: Props) {
+  // Input is locked only when AI is BOTH per-conversation active AND globally enabled
+  const inputLocked = isAiActive && aiEnabled
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -41,7 +44,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, isResolved, isSend
 
   const handleSend = async () => {
     const text = input.trim()
-    if (!text || isAiActive || isSending || isResolved) return
+    if (!text || inputLocked || isSending || isResolved) return
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     try {
@@ -203,8 +206,8 @@ export function ChatWindow({ messages, isLoading, isAiActive, isResolved, isSend
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={isAiActive || isSending}
-              placeholder={isAiActive ? 'AI is handling this…' : 'Type a message… (Enter to send, Shift+Enter for new line)'}
+              disabled={inputLocked || isSending}
+              placeholder={inputLocked ? 'AI is handling this…' : 'Type a message… (Enter to send, Shift+Enter for new line)'}
               rows={1}
               className={cn(
                 'flex-1 resize-none rounded-xl border border-border/60 bg-input px-3.5 py-2.5',
@@ -216,7 +219,7 @@ export function ChatWindow({ messages, isLoading, isAiActive, isResolved, isSend
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || isAiActive || isSending}
+              disabled={!input.trim() || inputLocked || isSending}
               className={cn(
                 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
                 'bg-primary text-primary-foreground',

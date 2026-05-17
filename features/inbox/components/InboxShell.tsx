@@ -157,6 +157,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
           messages={messages}
           isLoading={msgLoading}
           isAiActive={selectedConv?.is_ai_active ?? true}
+          aiEnabled={aiEnabled}
           isResolved={selectedConv?.status === 'resolved'}
           isSending={isSending}
           onSend={handleSend}
