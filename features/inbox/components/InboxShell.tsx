@@ -193,10 +193,7 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
           isResolved={selectedConv?.status === 'resolved'}
           isSending={isSending}
           onSend={handleSend}
-          onResolve={handleResolve}
           conversationId={selectedId}
-          customerName={selectedConv?.customer_name}
-          customerPhone={selectedConv?.customer_phone}
         />
         <div className="hidden lg:flex h-full">
           <ConversationDetails
