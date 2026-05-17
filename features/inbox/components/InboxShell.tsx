@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Info, X } from 'lucide-react'
 import { ConversationList } from './ConversationList'
@@ -29,6 +29,17 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
   const [search, setSearch]           = useState('')
   const [isSending, setIsSending]     = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
+
+  // ── Escape key — deselect conversation ───────────────────────────────────
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      if (detailsOpen) { setDetailsOpen(false); return }
+      if (selectedId)  { setSelectedId(null) }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [selectedId, detailsOpen])
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: conversations = [], isLoading: convLoading } =
