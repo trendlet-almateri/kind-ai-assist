@@ -1,11 +1,11 @@
 'use client'
 
 import {
-  Bot, User, UserCheck, Shield, ArrowLeftRight, AlertTriangle,
+  Bot, User, UserCheck, Shield, AlertTriangle,
   CheckCircle2, Activity, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  MessageCircle, Phone, Sparkles,
+  MessageCircle, Phone, Sparkles, Check,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { cn, formatDateTime, getInitial, getAvatarColor } from '@/lib/utils'
 import type { Conversation, TakeoverEvent, AgentProfile } from '@/types/database'
 
@@ -45,6 +45,18 @@ export function ConversationDetails({
 }: Props) {
   const [activityPage, setActivityPage]     = useState(0)
   const [activityOpen, setActivityOpen]     = useState(true)
+  const [agentDropOpen, setAgentDropOpen]   = useState(false)
+  const agentDropRef                        = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (agentDropRef.current && !agentDropRef.current.contains(e.target as Node)) {
+        setAgentDropOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   if (!conversation) {
     return (
@@ -107,19 +119,99 @@ export function ConversationDetails({
       {/* ── Assigned Agent ─────────────────────────────────────── */}
       {isAdmin && (
         <SectionCard icon={UserCheck} label="Assigned Agent">
-          <select
-            value={conversation.assigned_agent ?? ''}
-            onChange={(e) => onUpdateConversation(conversation.id, {
-              assigned_agent: e.target.value || null,
-              status: e.target.value ? 'assigned' : 'open',
-            })}
-            className="w-full rounded-lg border border-border/60 bg-input px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 text-foreground"
-          >
-            <option value="">Unassigned</option>
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>{a.full_name}</option>
-            ))}
-          </select>
+          <div className="relative" ref={agentDropRef}>
+            {/* Trigger */}
+            <button
+              onClick={() => setAgentDropOpen(v => !v)}
+              className={cn(
+                'flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
+                agentDropOpen
+                  ? 'border-primary/40 bg-input ring-1 ring-primary/20'
+                  : 'border-border/60 bg-input hover:border-border'
+              )}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {conversation.assigned_agent ? (
+                  <>
+                    {/* Online dot */}
+                    <span className={cn(
+                      'h-1.5 w-1.5 shrink-0 rounded-full',
+                      agents.find(a => a.id === conversation.assigned_agent)?.is_online
+                        ? 'bg-success' : 'bg-muted-foreground/40'
+                    )} />
+                    <span className="truncate font-medium text-foreground">
+                      {agents.find(a => a.id === conversation.assigned_agent)?.full_name ?? 'Unknown'}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground/60">Unassigned</span>
+                )}
+              </div>
+              <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform', agentDropOpen && 'rotate-180')} />
+            </button>
+
+            {/* Dropdown */}
+            {agentDropOpen && (
+              <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-lg border border-border/60 bg-popover shadow-lg">
+                {/* Unassigned option */}
+                <button
+                  onClick={() => {
+                    onUpdateConversation(conversation.id, { assigned_agent: null, status: 'open' })
+                    setAgentDropOpen(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-accent',
+                    !conversation.assigned_agent && 'bg-accent/60'
+                  )}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                  <span className={cn('flex-1 text-left', !conversation.assigned_agent ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+                    Unassigned
+                  </span>
+                  {!conversation.assigned_agent && <Check className="h-3 w-3 text-primary" />}
+                </button>
+
+                {/* Divider */}
+                {agents.length > 0 && <div className="border-t border-border/40" />}
+
+                {/* Agent options */}
+                {agents.map((agent) => {
+                  const isSelected = conversation.assigned_agent === agent.id
+                  return (
+                    <button
+                      key={agent.id}
+                      onClick={() => {
+                        onUpdateConversation(conversation.id, { assigned_agent: agent.id, status: 'assigned' })
+                        setAgentDropOpen(false)
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 px-3 py-2.5 text-xs transition-colors hover:bg-accent',
+                        isSelected && 'bg-accent/60'
+                      )}
+                    >
+                      {/* Avatar */}
+                      <div className="relative shrink-0">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                          {agent.full_name.charAt(0)}
+                        </div>
+                        <span className={cn(
+                          'absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full border border-popover',
+                          agent.is_online ? 'bg-success' : 'bg-muted-foreground/30'
+                        )} />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className={cn('truncate', isSelected ? 'font-medium text-foreground' : 'text-foreground/80')}>
+                          {agent.full_name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/50 capitalize">{agent.role}</p>
+                      </div>
+                      {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </SectionCard>
       )}
 
