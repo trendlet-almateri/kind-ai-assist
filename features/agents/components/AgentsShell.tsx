@@ -170,8 +170,8 @@ export function AgentsShell({ agents, currentUserId }: Props) {
       </div>
 
       {/* Table */}
-      <div className="glass-card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="glass-card overflow-x-auto">
+        <table className="w-full min-w-[700px] text-sm">
           <thead>
             <tr className="border-b border-border/50">
               {['Agent', 'Email', 'Role', 'Status', 'Online', 'Assigned', 'Actions'].map((h) => (
