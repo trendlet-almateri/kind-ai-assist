@@ -19,10 +19,10 @@ export default {
     extend: {
       // ── Typography ────────────────────────────────────
       fontFamily: {
-        heading: ['"DM Serif Display"', 'serif'],
-        body: ['"Plus Jakarta Sans"', 'sans-serif'],
-        agent: ['"Geist"', '"Plus Jakarta Sans"', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
+        heading: ['var(--font-heading)', 'Inter', 'system-ui', 'sans-serif'],
+        body: ['var(--font-body)', 'Inter', 'system-ui', 'sans-serif'],
+        agent: ['var(--font-body)', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
 
       // ── Color tokens (all map to CSS vars) ────────────

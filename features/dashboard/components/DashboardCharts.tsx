@@ -8,10 +8,10 @@ import type { DailyConversations, StatusBreakdown } from '@/types'
 
 // ── Shared tooltip style ─────────────────────────────────────────────────────
 const tooltipStyle = {
-  backgroundColor: 'hsl(30 10% 11%)',
-  border: '1px solid hsl(30 10% 16%)',
+  backgroundColor: 'hsl(var(--popover))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: '0.75rem',
-  color: 'hsl(38 14% 88%)',
+  color: 'hsl(var(--popover-foreground))',
   fontSize: 12,
 }
 
@@ -28,22 +28,22 @@ export function ConversationsChart({ data }: ConversationsChartProps) {
         <BarChart data={data} barSize={28} barGap={4}>
           <XAxis
             dataKey="label"
-            tick={{ fill: 'hsl(35 8% 50%)', fontSize: 11 }}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: 'hsl(35 8% 50%)', fontSize: 11 }}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             width={30}
           />
           <Tooltip
             contentStyle={tooltipStyle}
-            cursor={{ fill: 'hsl(30 8% 15%)' }}
+            cursor={{ fill: 'hsl(var(--muted))' }}
           />
-          <Bar dataKey="aiHandled" name="AI Handled" stackId="a" fill="hsl(164 56% 53%)" radius={[0, 0, 4, 4]} />
-          <Bar dataKey="agentHandled" name="Agent Handled" stackId="a" fill="hsl(220 81% 65%)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="aiHandled" name="AI Handled" stackId="a" fill="hsl(var(--primary))" radius={[0, 0, 4, 4]} />
+          <Bar dataKey="agentHandled" name="Agent Handled" stackId="a" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -77,7 +77,7 @@ export function StatusDonut({ data }: StatusDonutProps) {
           </Pie>
           <Legend
             formatter={(value) => (
-              <span style={{ color: 'hsl(35 8% 60%)', fontSize: 11 }}>
+              <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>
                 {value ? value.charAt(0).toUpperCase() + value.slice(1) : ''}
               </span>
             )}

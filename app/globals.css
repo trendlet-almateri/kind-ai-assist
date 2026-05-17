@@ -2,87 +2,161 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme: Intercom — friendly conversational UI.
+ * Light is the default (signature Intercom look); .dark is a matched variant.
+ * All surfaces consume these tokens via tailwind.config.ts — never hardcode.
+ */
+
 @layer base {
   :root {
-    /* Background: #151412 → warm espresso */
-    --background: 30 10% 8%;
-    --foreground: 38 14% 88%;
+    /* Background: #F7F8FA → soft off-white */
+    --background: 220 22% 97%;
+    --foreground: 222 24% 12%;
 
-    /* Card Surface: #1F1D1A */
-    --card: 30 10% 11%;
-    --card-foreground: 38 14% 88%;
+    /* Card Surface: #FFFFFF */
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 12%;
 
-    --popover: 30 10% 11%;
-    --popover-foreground: 38 14% 88%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 24% 12%;
 
-    /* Primary Accent: #3ECFB2 (softer teal) */
-    --primary: 164 56% 53%;
-    --primary-foreground: 30 10% 8%;
+    /* Primary Accent: #1F8DED (Intercom blue) */
+    --primary: 207 86% 53%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: slightly lighter warm surface */
-    --secondary: 30 8% 10%;
-    --secondary-foreground: 38 14% 88%;
+    /* Secondary: subtle blue-tinted surface */
+    --secondary: 220 22% 95%;
+    --secondary-foreground: 222 24% 12%;
 
-    --muted: 30 8% 15%;
-    /* Secondary Text: #8A8578 */
-    --muted-foreground: 35 8% 50%;
+    --muted: 220 20% 94%;
+    /* Secondary Text: #647491 */
+    --muted-foreground: 217 19% 48%;
 
-    --accent: 30 8% 13%;
-    --accent-foreground: 38 14% 88%;
+    --accent: 207 90% 96%;
+    --accent-foreground: 207 86% 40%;
 
-    /* Alert: #C0604A (deep coral) */
-    --destructive: 11 47% 52%;
-    --destructive-foreground: 38 14% 95%;
+    /* Alert: #E5484D */
+    --destructive: 358 75% 59%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Success: #4CAF82 (muted green) */
-    --success: 152 38% 49%;
-    --success-foreground: 38 14% 95%;
+    /* Success: #2BB673 */
+    --success: 152 62% 44%;
+    --success-foreground: 0 0% 100%;
 
-    /* Warning: #F7B731 (amber) */
-    --warning: 40 93% 58%;
-    --warning-foreground: 0 0% 0%;
+    /* Warning: #F5A623 */
+    --warning: 36 91% 55%;
+    --warning-foreground: 30 40% 12%;
 
-    /* Border: #2D2A26 */
-    --border: 30 10% 16%;
-    --input: 30 8% 13%;
-    --ring: 164 56% 53%;
+    /* Border: #E4E7EC */
+    --border: 220 16% 91%;
+    --input: 220 16% 91%;
+    --ring: 207 86% 53%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --surface: 30 10% 11%;
-    --surface-raised: 30 8% 15%;
+    --surface: 0 0% 100%;
+    --surface-raised: 220 22% 98%;
 
-    /* Sidebar: #1A1816 */
-    --sidebar-background: 30 8% 9%;
-    --sidebar-foreground: 38 14% 88%;
-    --sidebar-primary: 164 56% 53%;
-    --sidebar-primary-foreground: 30 10% 8%;
-    --sidebar-accent: 30 8% 13%;
-    --sidebar-accent-foreground: 38 14% 88%;
-    --sidebar-border: 30 10% 16%;
-    --sidebar-ring: 164 56% 53%;
+    /* Sidebar: #FFFFFF, slightly distinct from canvas */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 24% 12%;
+    --sidebar-primary: 207 86% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 207 90% 96%;
+    --sidebar-accent-foreground: 207 86% 40%;
+    --sidebar-border: 220 16% 91%;
+    --sidebar-ring: 207 86% 53%;
 
-    /* Active nav highlight */
-    --nav-active: 168 25% 14%;
+    /* Active nav highlight — soft blue wash */
+    --nav-active: 207 90% 95%;
 
-    /* Metadata color: #5A564E */
-    --metadata: 30 8% 33%;
+    /* Metadata color: #94A0B8 */
+    --metadata: 218 22% 65%;
 
-    /* Chart blue: #5B8DEF */
-    --chart-blue: 220 81% 65%;
+    /* Chart blue */
+    --chart-blue: 207 86% 53%;
 
-    /* Chat bubble colors */
-    --bubble-customer: 30 10% 14%;
-    --bubble-customer-border: 30 10% 20%;
-    --bubble-bot: 164 30% 14%;
-    --bubble-bot-border: 164 56% 25%;
-    --bubble-agent: 38 55% 13%;
-    --bubble-agent-border: 40 60% 28%;
+    /* Chat bubble colors — light */
+    --bubble-customer: 0 0% 100%;
+    --bubble-customer-border: 220 16% 90%;
+    --bubble-bot: 207 90% 96%;
+    --bubble-bot-border: 207 70% 85%;
+    --bubble-agent: 152 50% 95%;
+    --bubble-agent-border: 152 45% 80%;
 
     /* Opacity tokens */
     --text-primary: 1;
-    --text-secondary: 0.7;
-    --text-tertiary: 0.45;
+    --text-secondary: 0.72;
+    --text-tertiary: 0.5;
+  }
+
+  .dark {
+    /* Background: #0E1117 → cool ink */
+    --background: 222 26% 7%;
+    --foreground: 220 16% 91%;
+
+    /* Card Surface: #1A1D24 */
+    --card: 222 18% 12%;
+    --card-foreground: 220 16% 91%;
+
+    --popover: 222 18% 12%;
+    --popover-foreground: 220 16% 91%;
+
+    /* Primary Accent: lighter blue for dark contrast */
+    --primary: 209 92% 60%;
+    --primary-foreground: 222 26% 7%;
+
+    --secondary: 222 16% 14%;
+    --secondary-foreground: 220 16% 91%;
+
+    --muted: 222 14% 18%;
+    --muted-foreground: 218 14% 62%;
+
+    --accent: 209 50% 18%;
+    --accent-foreground: 209 92% 75%;
+
+    --destructive: 358 70% 58%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 55% 48%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 36 88% 58%;
+    --warning-foreground: 30 40% 10%;
+
+    --border: 222 14% 20%;
+    --input: 222 14% 18%;
+    --ring: 209 92% 60%;
+
+    --surface: 222 18% 12%;
+    --surface-raised: 222 14% 16%;
+
+    --sidebar-background: 222 22% 9%;
+    --sidebar-foreground: 220 16% 91%;
+    --sidebar-primary: 209 92% 60%;
+    --sidebar-primary-foreground: 222 26% 7%;
+    --sidebar-accent: 209 50% 18%;
+    --sidebar-accent-foreground: 209 92% 75%;
+    --sidebar-border: 222 14% 20%;
+    --sidebar-ring: 209 92% 60%;
+
+    --nav-active: 209 55% 16%;
+
+    --metadata: 218 12% 50%;
+
+    --chart-blue: 209 92% 60%;
+
+    --bubble-customer: 222 16% 15%;
+    --bubble-customer-border: 222 14% 22%;
+    --bubble-bot: 209 45% 16%;
+    --bubble-bot-border: 209 55% 28%;
+    --bubble-agent: 152 35% 16%;
+    --bubble-agent-border: 152 40% 28%;
+
+    --text-primary: 1;
+    --text-secondary: 0.72;
+    --text-tertiary: 0.5;
   }
 }
 
@@ -91,19 +165,6 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
-  }
-
-  /* Subtle film-grain noise overlay — premium feel */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0.02;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 256px 256px;
   }
 
   /* Slim custom scrollbar */
@@ -126,40 +187,46 @@
 }
 
 @layer components {
-  /* Glass card — dashboard widgets */
+  /* Card — dashboard widgets. Intercom: clean white, soft shadow, no glass blur. */
   .glass-card {
-    @apply rounded-2xl border border-border shadow-lg;
-    background: hsl(var(--card) / 0.85);
-    backdrop-filter: blur(16px) saturate(1.3);
-    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    @apply rounded-2xl border border-border bg-card;
     box-shadow:
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.02),
-      0 1px 3px rgba(0,0,0,0.4);
+      0 1px 2px hsl(222 24% 12% / 0.04),
+      0 4px 12px -4px hsl(222 24% 12% / 0.06);
+  }
+  .dark .glass-card {
+    box-shadow:
+      0 1px 2px hsl(0 0% 0% / 0.3),
+      0 4px 12px -4px hsl(0 0% 0% / 0.4);
   }
 
-  /* Stat card with hover teal glow */
+  /* Stat card with hover blue lift */
   .stat-card {
-    @apply glass-card p-6 transition-all duration-300 hover:border-primary/30;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    @apply glass-card p-6 transition-all duration-200 hover:border-primary/40;
   }
   .stat-card:hover {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 20px -6px hsl(var(--primary) / 0.12);
+    box-shadow:
+      0 1px 2px hsl(222 24% 12% / 0.05),
+      0 8px 20px -6px hsl(var(--primary) / 0.16);
   }
 
-  /* Agent-view card — cleaner, no blur */
+  /* Agent-view card — flat, crisp */
   .agent-card {
     @apply rounded-xl border border-border bg-card p-4 transition-colors duration-150;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    box-shadow: 0 1px 2px hsl(222 24% 12% / 0.04);
+  }
+  .dark .agent-card {
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.3);
   }
 
   /* Sidebar nav items */
   .nav-item {
     @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200;
-    color: hsl(var(--foreground) / 0.6);
+    color: hsl(var(--foreground) / 0.62);
   }
   .nav-item:hover {
     background: hsl(var(--accent));
-    color: hsl(var(--foreground) / 0.85);
+    color: hsl(var(--accent-foreground));
   }
   .nav-item-active {
     background: hsl(var(--nav-active)) !important;
@@ -169,7 +236,7 @@
 
   /* Badges */
   .badge-glow { @apply rounded-full px-3 py-1 text-xs font-semibold tracking-wide; }
-  .badge-primary   { @apply badge-glow bg-primary/15 text-primary; }
+  .badge-primary   { @apply badge-glow bg-primary/12 text-primary; }
   .badge-success   { @apply badge-glow bg-success/15 text-success; }
   .badge-warning   { @apply badge-glow bg-warning/15 text-warning; }
   .badge-danger    { @apply badge-glow bg-destructive/15 text-destructive; }
@@ -177,27 +244,24 @@
   /* Skeleton pulse */
   .skeleton-pulse { @apply animate-pulse rounded-xl bg-muted/60; }
 
-  /* Teal left border accent */
+  /* Blue left border accent */
   .teal-accent-left { border-left: 3px solid hsl(var(--primary)); }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-[hsl(164,40%,68%)] bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-[hsl(207,90%,68%)] bg-clip-text text-transparent;
   }
 
-  /* Chat window background */
+  /* Chat window background — soft, airy */
   .chat-pattern-bg {
     background:
-      radial-gradient(ellipse 120% 80% at 50% 0%, hsl(164 30% 8% / 0.4) 0%, transparent 50%),
-      radial-gradient(ellipse 100% 60% at 50% 100%, hsl(164 40% 6% / 0.3) 0%, transparent 45%),
-      radial-gradient(circle at 20% 30%, hsl(30 20% 6% / 0.5) 0%, transparent 35%),
-      radial-gradient(circle at 80% 70%, hsl(30 15% 5% / 0.4) 0%, transparent 40%),
-      linear-gradient(180deg, hsl(30 12% 6%) 0%, hsl(30 8% 4%) 100%);
+      radial-gradient(ellipse 120% 80% at 50% 0%, hsl(var(--accent) / 0.5) 0%, transparent 55%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%);
     background-attachment: fixed;
   }
 
-  .teal-glow { box-shadow: 0 0 16px -4px hsl(var(--primary) / 0.15); }
+  .teal-glow { box-shadow: 0 0 16px -4px hsl(var(--primary) / 0.2); }
 
   .custom-scrollbar::-webkit-scrollbar { width: 5px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

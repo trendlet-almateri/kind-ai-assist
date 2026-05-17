@@ -22,6 +22,7 @@ import {
   Settings, ChevronLeft, LogOut, Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { logoutAction } from '@/features/auth/actions'
 import type { AgentProfile } from '@/types/database'
 
@@ -188,17 +189,25 @@ export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSid
             </div>
           )}
           {!collapsed && (
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="rounded-xl p-1.5 transition-colors hover:bg-accent text-metadata hover:text-foreground"
-                title="Sign out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </form>
+            <div className="flex items-center gap-0.5">
+              <ThemeToggle collapsed={collapsed} />
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="rounded-xl p-1.5 transition-colors hover:bg-accent text-metadata hover:text-foreground"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </form>
+            </div>
           )}
         </div>
+        {collapsed && (
+          <div className="mt-3 flex justify-center">
+            <ThemeToggle collapsed={collapsed} />
+          </div>
+        )}
       </div>
     </motion.aside>
     </>

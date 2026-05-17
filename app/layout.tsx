@@ -4,27 +4,33 @@
  * WHY Server Component:
  * - Fonts load at the server level, no FOUT (flash of unstyled text).
  * - Metadata is static — no client JS needed.
- * - Only providers that need browser APIs are wrapped in a Client Component.
+ * - Only providers that need browser APIs are wrapped in Client Components.
+ *
+ * Theme: Intercom. Light is the default; next-themes toggles a matched
+ * dark variant by adding `.dark` to <html>.
  */
 
 import type { Metadata, Viewport } from 'next'
-import { DM_Serif_Display, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
-import { Toaster } from 'sonner'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { ThemedToaster } from '@/components/providers/ThemedToaster'
 import { TitleGuard } from '@/components/providers/TitleGuard'
 import './globals.css'
 
 // ── Font loading ────────────────────────────────────────────────────────────
-const dmSerifDisplay = DM_Serif_Display({
+// Inter covers headings + body (clean Intercom-style sans). One family,
+// two CSS vars so existing font-heading / font-body utilities keep working.
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-heading',
+  variable: '--font-body',
   display: 'swap',
 })
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const interHeading = Inter({
   subsets: ['latin'],
-  variable: '--font-body',
+  weight: ['600', '700'],
+  variable: '--font-heading',
   display: 'swap',
 })
 
@@ -47,7 +53,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#151412',
+  themeColor: '#F7F8FA',
 }
 
 // ── Root Layout ─────────────────────────────────────────────────────────────
@@ -55,26 +61,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${dmSerifDisplay.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} dark`}
+      className={`${inter.variable} ${interHeading.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <body className="font-body antialiased bg-background text-foreground">
-        <QueryProvider>
-          <TitleGuard />
-          {children}
-        </QueryProvider>
-        {/* Toaster outside QueryProvider — works globally */}
-        <Toaster
-          position="bottom-right"
-          theme="dark"
-          toastOptions={{
-            style: {
-              background: 'hsl(30 10% 11%)',
-              border: '1px solid hsl(30 10% 16%)',
-              color: 'hsl(38 14% 88%)',
-            },
-          }}
-        />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <TitleGuard />
+            {children}
+          </QueryProvider>
+          {/* Toaster outside QueryProvider — works globally */}
+          <ThemedToaster />
+        </ThemeProvider>
       </body>
     </html>
   )
