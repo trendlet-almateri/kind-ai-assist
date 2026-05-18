@@ -139,6 +139,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
   }
 
   return (
+    <>
     <div className="p-4 pt-20 lg:p-6 lg:pt-6 space-y-5 font-agent">
 
       {/* Header */}
@@ -287,25 +288,27 @@ export function AgentsShell({ agents, currentUserId }: Props) {
         </div>
       )}
 
-      <AnimatePresence>
-        {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
-        {selectedAgent && (
-          <AgentDetailModal
-            agent={selectedAgent}
-            isSelf={selectedAgent.id === currentUserId}
-            onClose={() => setSelectedAgent(null)}
-            onStatusChange={async (id, status) => {
-              await handleStatusChange(id, status)
-              setSelectedAgent(null)
-            }}
-            onRoleChange={async (id, role) => {
-              await handleRoleChange(id, role)
-              setSelectedAgent(null)
-            }}
-          />
-        )}
-      </AnimatePresence>
     </div>
+
+    <AnimatePresence>
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+      {selectedAgent && (
+        <AgentDetailModal
+          agent={selectedAgent}
+          isSelf={selectedAgent.id === currentUserId}
+          onClose={() => setSelectedAgent(null)}
+          onStatusChange={async (id, status) => {
+            await handleStatusChange(id, status)
+            setSelectedAgent(null)
+          }}
+          onRoleChange={async (id, role) => {
+            await handleRoleChange(id, role)
+            setSelectedAgent(null)
+          }}
+        />
+      )}
+    </AnimatePresence>
+    </>
   )
 }
 
