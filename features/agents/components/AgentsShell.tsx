@@ -452,6 +452,14 @@ function AgentDetailModal({
 // ── Invite Modal ──────────────────────────────────────────────────────────────
 function InviteModal({ onClose }: { onClose: () => void }) {
   const [state, formAction, isPending] = useActionState(inviteAgentAction, {})
+  const [role, setRole]     = useState<AgentRole>('agent')
+  const [roleOpen, setRoleOpen] = useState(false)
+
+  const roleOptions: { value: AgentRole; label: string; dot: string; desc: string }[] = [
+    { value: 'agent', label: 'Agent', dot: 'bg-primary',  desc: 'Can view and reply to conversations' },
+    { value: 'admin', label: 'Admin', dot: 'bg-warning',  desc: 'Full access including team management' },
+  ]
+  const selected = roleOptions.find((o) => o.value === role)!
 
   useEffect(() => {
     if (state.data) {
@@ -505,14 +513,49 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
           <div className="space-y-1.5">
             <label className="text-sm text-muted-foreground">Role</label>
-            <select
-              name="role"
-              defaultValue="agent"
-              className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
-            >
-              <option value="agent">Agent</option>
-              <option value="admin">Admin</option>
-            </select>
+            {/* Hidden input submits with the form */}
+            <input type="hidden" name="role" value={role} />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setRoleOpen((p) => !p)}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-input px-3 py-2.5 text-sm hover:border-border/80 transition-colors"
+              >
+                <span className={cn('h-2 w-2 rounded-full shrink-0', selected.dot)} />
+                <span className="flex-1 text-left font-medium">{selected.label}</span>
+                <span className="text-xs text-muted-foreground/50 mr-1">{selected.desc}</span>
+                <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground/50 shrink-0 transition-transform', roleOpen && 'rotate-180')} />
+              </button>
+
+              <AnimatePresence>
+                {roleOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setRoleOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 top-full z-20 mt-1.5 w-full rounded-xl border border-border bg-card shadow-xl overflow-hidden"
+                    >
+                      {roleOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => { setRole(opt.value); setRoleOpen(false) }}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-sm hover:bg-accent transition-colors"
+                        >
+                          <span className={cn('h-2 w-2 rounded-full shrink-0', opt.dot)} />
+                          <span className="font-medium">{opt.label}</span>
+                          <span className="ml-auto text-xs text-muted-foreground/50">{opt.desc}</span>
+                          {role === opt.value && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">
