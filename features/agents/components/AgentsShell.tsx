@@ -187,7 +187,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
             {paged.map((agent) => (
               <tr
                 key={agent.id}
-                onClick={() => setSelectedAgent(agent)}
+                onClick={() => { if (window.innerWidth < 1024) setSelectedAgent(agent) }}
                 className="border-b border-border/30 hover:bg-accent/40 transition-colors cursor-pointer lg:cursor-default"
               >
                 {/* Agent */}
