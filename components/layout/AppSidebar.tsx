@@ -170,7 +170,7 @@ export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSid
               'h-2 w-2 shrink-0 rounded-full transition-colors duration-300',
               aiEnabled
                 ? 'bg-success shadow-[0_0_6px_hsl(var(--success)/0.8)] animate-pulse'
-                : 'bg-muted-foreground/30'
+                : 'bg-destructive shadow-[0_0_6px_hsl(var(--destructive)/0.6)]'
             )} />
           )}
         </div>
