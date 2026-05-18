@@ -149,7 +149,7 @@ export function AgentsShell({ agents, currentUserId }: Props) {
 
       {/* Filters + Invite */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[160px]">
+        <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
           <input
             value={search}
