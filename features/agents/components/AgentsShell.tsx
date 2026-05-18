@@ -142,24 +142,14 @@ export function AgentsShell({ agents, currentUserId }: Props) {
     <div className="p-4 pt-20 lg:p-6 lg:pt-6 space-y-5 font-agent">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl leading-none">Agents</h1>
-          <p className="mt-1.5 text-xs text-muted-foreground/60">{agents.length} agents total</p>
-        </div>
-        <button
-          onClick={() => setShowInvite(true)}
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          <UserPlus className="h-4 w-4" />
-          <span className="hidden sm:inline">Invite Agent</span>
-          <span className="sm:hidden">Invite</span>
-        </button>
+      <div>
+        <h1 className="font-heading text-2xl leading-none">Agents</h1>
+        <p className="mt-1.5 text-xs text-muted-foreground/60">{agents.length} agents total</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-        <div className="relative flex-1 sm:w-64 sm:flex-none">
+      {/* Filters + Invite */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
           <input
             value={search}
@@ -168,10 +158,15 @@ export function AgentsShell({ agents, currentUserId }: Props) {
             className="w-full rounded-xl border border-border bg-card pl-9 pr-3 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
-        <div className="flex gap-2">
-          <FilterDropdown value={roleFilter}   onChange={(v) => { setRoleFilter(v);   setPage(0) }} options={ROLE_OPTIONS}   />
-          <FilterDropdown value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(0) }} options={STATUS_OPTIONS} />
-        </div>
+        <FilterDropdown value={roleFilter}   onChange={(v) => { setRoleFilter(v);   setPage(0) }} options={ROLE_OPTIONS}   />
+        <FilterDropdown value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(0) }} options={STATUS_OPTIONS} />
+        <button
+          onClick={() => setShowInvite(true)}
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors ml-auto"
+        >
+          <UserPlus className="h-4 w-4" />
+          <span>Invite Agent</span>
+        </button>
       </div>
 
       {/* Table — mobile: 3 cols + row tap for modal | desktop: full details inline */}
