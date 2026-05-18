@@ -110,6 +110,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
   }
 
   return (
+    <>
     <div className="p-4 pt-20 lg:p-8 lg:pt-8 font-agent min-h-screen">
       {/* Header */}
       <div className="mb-8">
@@ -287,17 +288,19 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
       </div>
 
 
-      {/* Disable AI confirmation modal */}
-      <AnimatePresence>
-        {showDisableConfirm && (
+    </div>
+
+    {/* Disable AI confirmation modal */}
+    <AnimatePresence>
+      {showDisableConfirm && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
+        >
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
+            initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+            className="w-full max-w-sm glass-card p-6 space-y-4"
           >
-            <motion.div
-              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="w-full max-w-sm glass-card p-6 space-y-4"
-            >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
                   <ZapOff className="h-5 w-5" />
@@ -324,8 +327,8 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
-    </div>
+    </AnimatePresence>
+    </>
   )
 }
 

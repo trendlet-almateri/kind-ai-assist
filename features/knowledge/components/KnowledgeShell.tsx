@@ -153,6 +153,7 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
   }
 
   return (
+    <>
     <div className="p-4 pt-20 lg:p-6 lg:pt-6 space-y-6 font-agent">
 
       {/* Header */}
@@ -261,24 +262,26 @@ export function KnowledgeShell({ sources, isAdmin, userId }: Props) {
         </div>
       )}
 
-      <AnimatePresence>
-        {showUpload && (
-          <UploadModal
-            onClose={() => setShowUpload(false)}
-            onSuccess={() => { setShowUpload(false); router.refresh() }}
-            userId={userId}
-            workspaceId={sources[0]?.workspace_id ?? '00000000-0000-0000-0000-000000000001'}
-          />
-        )}
-        {confirmSource && (
-          <DeleteConfirmModal
-            name={confirmSource.name}
-            onCancel={() => setConfirmSource(null)}
-            onConfirm={handleDelete}
-          />
-        )}
-      </AnimatePresence>
     </div>
+
+    <AnimatePresence>
+      {showUpload && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onSuccess={() => { setShowUpload(false); router.refresh() }}
+          userId={userId}
+          workspaceId={sources[0]?.workspace_id ?? '00000000-0000-0000-0000-000000000001'}
+        />
+      )}
+      {confirmSource && (
+        <DeleteConfirmModal
+          name={confirmSource.name}
+          onCancel={() => setConfirmSource(null)}
+          onConfirm={handleDelete}
+        />
+      )}
+    </AnimatePresence>
+    </>
   )
 }
 
