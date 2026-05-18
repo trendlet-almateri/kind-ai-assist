@@ -485,8 +485,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
         <form action={formAction} className="space-y-4">
           {[
-            { name: 'full_name', label: 'Full Name',  type: 'text',  placeholder: 'Jane Smith'        },
-            { name: 'username',  label: 'Username',   type: 'text',  placeholder: 'jane.smith'        },
+            { name: 'username',  label: 'Username',   type: 'text',  placeholder: 'e.g. jane.smith'   },
             { name: 'email',     label: 'Email',      type: 'email', placeholder: 'jane@company.com'  },
           ].map((f) => (
             <div key={f.name} className="space-y-1.5">

@@ -17,7 +17,6 @@ export async function inviteAgentAction(
   }
 
   const parsed = inviteAgentSchema.safeParse({
-    full_name: formData.get('full_name'),
     username:  formData.get('username'),
     email:     formData.get('email'),
     role:      formData.get('role') ?? 'agent',
