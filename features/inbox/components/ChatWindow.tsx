@@ -173,9 +173,14 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
                         {/* AI chip + tokens — below bubble */}
                         {isAI && (
                           <div className={cn('mt-1 flex items-center gap-1.5', isRight ? 'justify-end' : 'justify-start')}>
-                            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px]">
-                              <Bot className="h-2.5 w-2.5 text-primary" />
-                              <span className="text-primary/80 font-medium">{msg.model_used ?? 'AI'}</span>
+                            <span className={cn(
+                              'flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px]',
+                              inputLocked ? 'bg-success/10' : 'bg-destructive/10'
+                            )}>
+                              <Bot className={cn('h-2.5 w-2.5', inputLocked ? 'text-success' : 'text-destructive')} />
+                              <span className={cn('font-medium', inputLocked ? 'text-success/80' : 'text-destructive/80')}>
+                                {msg.model_used ?? 'AI'}
+                              </span>
                             </span>
                             {msg.tokens_used != null && (
                               <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/50">
