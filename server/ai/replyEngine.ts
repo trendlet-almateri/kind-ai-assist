@@ -131,7 +131,21 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
 
   try {
     // Turn 1 — let OpenAI decide whether to call a tool or reply directly
-    const turn1      = await openai.chat.completions.create(requestParams)
+    let turn1
+    try {
+      turn1 = await openai.chat.completions.create(requestParams)
+    } catch (toolsErr) {
+      // If the tools-enabled call fails (e.g. model/schema mismatch), fall back
+      // to a plain call so the AI can still reply to non-order questions.
+      const errMsg = toolsErr instanceof Error ? toolsErr.message : String(toolsErr)
+      console.error('[replyEngine] Tools call failed, falling back to no-tools:', errMsg)
+      const { tools: _tools, ...paramsWithoutTools } = requestParams as Record<string, unknown>
+      void _tools
+      turn1 = await openai.chat.completions.create(
+        paramsWithoutTools as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming
+      )
+    }
+
     const choice1    = turn1.choices[0]
     const toolCalls  = choice1?.message?.tool_calls
 
@@ -141,6 +155,7 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
         toolCalls.map(async (tc) => {
           const args   = JSON.parse(tc.function.arguments) as Record<string, string>
           const result = await executeTrendletTool(tc.function.name, args)
+          console.log(`[replyEngine] Tool ${tc.function.name} → found=${JSON.parse(result).found}`)
           return {
             role:         'tool' as const,
             tool_call_id: tc.id,
@@ -173,7 +188,9 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     }
 
   } catch (err) {
-    console.error('[replyEngine] OpenAI error:', err)
+    const errMsg = err instanceof Error ? err.message : String(err)
+    console.error('[replyEngine] Fatal error — could not generate reply:', errMsg)
+    if (err instanceof Error && err.stack) console.error(err.stack)
     replyText = 'I apologize, I am currently experiencing technical difficulties. A human agent will assist you shortly.'
   }
 
