@@ -78,6 +78,21 @@ export const trendletToolDefs: OpenAI.Chat.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'escalate_to_human',
+      description:
+        'Escalate the conversation to a human agent. ' +
+        'Call this when the customer explicitly asks to speak with a human, ' +
+        'says "أبي أكلم إنسان", "talk to agent", or "human support".',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
 ]
 
 // ── Executor ──────────────────────────────────────────────────────────────────
@@ -103,6 +118,10 @@ export async function executeTrendletTool(
 
     case 'getShipmentTracking':
       result = await getShipmentTracking(args.orderNumber ?? '')
+      break
+
+    case 'escalate_to_human':
+      result = { escalated: true }
       break
 
     default:

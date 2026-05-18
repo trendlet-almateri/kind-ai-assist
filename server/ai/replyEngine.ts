@@ -145,6 +145,17 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     const toolCalls  = choice1?.message?.tool_calls
 
     if (choice1?.finish_reason === 'tool_calls' && toolCalls?.length) {
+      // Check for escalation first — if requested, hand off to human and stop
+      const hasEscalation = toolCalls.some((tc) => tc.function.name === 'escalate_to_human')
+      if (hasEscalation) {
+        await db
+          .from('conversations')
+          .update({ is_ai_active: false })
+          .eq('id', ctx.conversationId)
+        console.log(`[replyEngine] Escalated to human for conversation ${ctx.conversationId}`)
+        return // Do not send any AI reply — human takes over
+      }
+
       // Execute each Trendlet tool call in parallel
       const toolResults = await Promise.all(
         toolCalls.map(async (tc) => {
@@ -170,7 +181,7 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
         model,
         temperature,
         messages: turn2Messages,
-        max_tokens: 500,
+        max_tokens: 800,
       })
 
       replyText  = turn2.choices[0]?.message?.content ?? 'I apologize, I was unable to process your request.'
