@@ -298,15 +298,15 @@ function AgentDetailModal({
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-[200] flex items-end justify-center bg-black/75 sm:items-center sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.18 }}
-        className="w-full max-w-sm glass-card p-0 overflow-hidden"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm glass-card p-0 overflow-hidden"
       >
         {/* Top section — avatar + name */}
         <div className="relative px-6 pt-6 pb-5 border-b border-border/40">
