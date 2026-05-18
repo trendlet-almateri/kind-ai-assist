@@ -231,13 +231,13 @@ export function ConversationDetails({
           <span className={cn(
             'h-3 w-3 rounded-full shrink-0',
             conversation.is_ai_active
-              ? 'bg-primary animate-pulse shadow-[0_0_6px_hsl(var(--primary)/0.5)]'
-              : 'bg-destructive/80'
+              ? 'bg-success animate-pulse shadow-[0_0_6px_hsl(var(--success)/0.7)]'
+              : 'bg-destructive shadow-[0_0_6px_hsl(var(--destructive)/0.6)]'
           )} />
           <div className="flex-1 min-w-0">
             <p className={cn(
               'text-xs font-bold leading-none',
-              conversation.is_ai_active ? 'text-primary' : 'text-destructive'
+              conversation.is_ai_active ? 'text-success' : 'text-destructive'
             )}>
               {conversation.is_ai_active ? 'Bot Active' : 'Bot Inactive'}
             </p>
