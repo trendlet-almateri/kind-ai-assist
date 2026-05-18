@@ -30,7 +30,7 @@ export interface ApiError {
 export type ApiResult<T = void> = ApiSuccess<T> | ApiError
 
 // ── Server Action result ────────────────────────────────────────────────────
-export interface ActionState<T = void> {
+export interface ActionState<T = unknown> {
   data?: T
   error?: string
 }

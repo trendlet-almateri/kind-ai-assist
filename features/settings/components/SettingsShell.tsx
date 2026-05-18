@@ -14,7 +14,7 @@ import {
   saveSystemPromptAction,
   deleteSystemPromptAction,
 } from '@/features/settings/actions'
-import type { WorkspaceSettings, SystemPrompt, ActionState } from '@/types'
+import type { WorkspaceSettings, SystemPrompt } from '@/types'
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange, disabled }: {
@@ -341,7 +341,7 @@ function PromptEditor({
   onSaved: () => void
   onDeleted: () => void
 }) {
-  const [state, formAction, isPending] = useActionState(saveSystemPromptAction, {} as ActionState<boolean>)
+  const [state, formAction, isPending] = useActionState(saveSystemPromptAction, {})
   const [provider,    setProvider]    = useState(prompt.provider ?? 'openai')
   const [temperature, setTemperature] = useState(prompt.temperature ?? 0.7)
   const [isActive,    setIsActive]    = useState(prompt.is_active ?? false)

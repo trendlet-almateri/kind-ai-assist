@@ -45,9 +45,9 @@ export async function saveWorkspaceSettingsAction(
 
 // ── Save system prompt ────────────────────────────────────────────────────────
 export async function saveSystemPromptAction(
-  _prev: ActionState<boolean>,
+  _prev: ActionState,
   formData: FormData
-): Promise<ActionState<boolean>> {
+): Promise<ActionState> {
   const session = await getServerSession()
   if (!session || session.profile.role !== 'admin') {
     return { error: 'Admin access required' }
