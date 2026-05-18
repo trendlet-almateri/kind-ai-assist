@@ -174,16 +174,18 @@ export function AgentsShell({ agents, currentUserId }: Props) {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table — mobile: 3 cols + row tap for modal | desktop: full details inline */}
       <div className="glass-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50">
-              {['Agent', 'Role', 'Status'].map((h) => (
-                <th key={h} className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 first:text-left">
-                  {h}
-                </th>
-              ))}
+              <th className="px-4 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">Agent</th>
+              <th className="px-4 py-3.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 hidden lg:table-cell">Email</th>
+              <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">Role</th>
+              <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">Status</th>
+              <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 hidden lg:table-cell">Online</th>
+              <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 hidden lg:table-cell">Assigned</th>
+              <th className="px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 hidden lg:table-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -191,9 +193,9 @@ export function AgentsShell({ agents, currentUserId }: Props) {
               <tr
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent)}
-                className="border-b border-border/30 hover:bg-accent/40 transition-colors cursor-pointer"
+                className="border-b border-border/30 hover:bg-accent/40 transition-colors cursor-pointer lg:cursor-default"
               >
-                {/* Agent — left aligned */}
+                {/* Agent */}
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
@@ -211,17 +213,53 @@ export function AgentsShell({ agents, currentUserId }: Props) {
                     </div>
                   </div>
                 </td>
-                {/* Role — centered */}
+                {/* Email — desktop only */}
+                <td className="px-4 py-4 hidden lg:table-cell">
+                  <span className="text-xs text-muted-foreground">{agent.email}</span>
+                </td>
+                {/* Role */}
                 <td className="px-4 py-4 text-center">
                   <span className={cn('badge-glow text-[11px]', ROLE_BADGE[agent.role])}>
                     {agent.role}
                   </span>
                 </td>
-                {/* Status — centered */}
+                {/* Status */}
                 <td className="px-4 py-4 text-center">
                   <span className={cn('badge-glow text-[11px]', STATUS_BADGE[agent.status].cls)}>
                     {STATUS_BADGE[agent.status].label}
                   </span>
+                </td>
+                {/* Online — desktop only */}
+                <td className="px-4 py-4 text-center hidden lg:table-cell">
+                  <span className={cn('inline-block h-2.5 w-2.5 rounded-full', agent.is_online ? 'bg-success' : 'bg-muted-foreground/30')} />
+                </td>
+                {/* Assigned — desktop only */}
+                <td className="px-4 py-4 text-center hidden lg:table-cell">
+                  <span className="font-semibold text-foreground">{agent.assigned_conversations}</span>
+                </td>
+                {/* Actions — desktop only */}
+                <td className="px-4 py-4 hidden lg:table-cell" onClick={(e) => e.stopPropagation()}>
+                  {agent.id !== currentUserId && (
+                    <div className="flex items-center justify-center gap-1">
+                      {agent.status === 'active' ? (
+                        <button onClick={() => handleStatusChange(agent.id, 'suspended')} className="rounded-lg p-1.5 text-muted-foreground hover:text-warning hover:bg-warning/10 transition-colors" title="Suspend">
+                          <ShieldOff className="h-3.5 w-3.5" />
+                        </button>
+                      ) : agent.status === 'suspended' ? (
+                        <button onClick={() => handleStatusChange(agent.id, 'active')} className="rounded-lg p-1.5 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors" title="Activate">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                      {agent.status !== 'archived' && (
+                        <button onClick={() => handleStatusChange(agent.id, 'archived')} className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Archive">
+                          <Archive className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <button onClick={() => handleRoleChange(agent.id, agent.role === 'admin' ? 'agent' : 'admin')} className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors" title={agent.role === 'admin' ? 'Demote to agent' : 'Promote to admin'}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
