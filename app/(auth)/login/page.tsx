@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: 'Sign In',
 }
 
-export default function LoginPage() {
-  return <LoginForm />
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  return <LoginForm searchParams={searchParams} />
 }

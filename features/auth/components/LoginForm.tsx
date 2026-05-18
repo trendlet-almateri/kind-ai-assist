@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { loginAction } from '@/features/auth/actions'
@@ -16,8 +16,21 @@ const bubbles = [
   { id: 4, text: 'Resolved in 2 min ✓',           align: 'right', delay: 1.8,  y: 0   },
 ]
 
-export function LoginForm() {
+export function LoginForm({
+  searchParams,
+}: {
+  searchParams?: Promise<{ error?: string }>
+}) {
   const [state, formAction, isPending] = useActionState(loginAction, initialState)
+  const [urlError, setUrlError] = useState<string | null>(null)
+
+  // Read error from URL (e.g. redirected here from /auth/callback with ?error=…)
+  useEffect(() => {
+    searchParams?.then((p) => {
+      if (p.error) setUrlError(decodeURIComponent(p.error))
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="flex min-h-screen">
@@ -125,13 +138,13 @@ export function LoginForm() {
           </div>
 
           {/* Error banner */}
-          {state?.error && (
+          {(state?.error || urlError) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               className="mb-5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
-              {state.error}
+              {state?.error ?? urlError}
             </motion.div>
           )}
 

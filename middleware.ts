@@ -31,6 +31,8 @@ const PROTECTED_ROUTES  = ['/dashboard', '/inbox', '/knowledge', '/agents', '/se
 const ADMIN_ONLY_ROUTES = ['/dashboard', '/agents', '/settings']
 // Routes that authenticated users should not see
 const AUTH_ROUTES       = ['/login']
+// Routes that must always be reachable regardless of auth state
+const PUBLIC_ROUTES     = ['/auth/callback', '/accept-invite']
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -65,6 +67,11 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
+
+  // ── Step 3a: Always let public/callback routes through ─────────────────
+  if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
+    return supabaseResponse
+  }
 
   // ── Step 3: Redirect authenticated users away from /login ──────────────
   if (user && AUTH_ROUTES.some((r) => pathname.startsWith(r))) {

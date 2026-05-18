@@ -98,7 +98,7 @@ serve(async (req: Request) => {
           role,
           workspace_id: callerProfile.workspace_id,
         },
-        redirectTo: `${Deno.env.get('APP_URL') ?? 'http://localhost:3000'}/accept-invite`,
+        redirectTo: `${Deno.env.get('APP_URL') ?? 'http://localhost:3000'}/auth/callback`,
       }
     )
 
