@@ -48,11 +48,11 @@ export default async function DashboardPage() {
     ])
 
   return (
-    <div className="space-y-5 p-4 pt-16 lg:p-6 lg:pt-6">
+    <div className="space-y-5 p-4 pt-16 lg:p-6 lg:pt-6 w-full overflow-x-hidden">
       {/* Header */}
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground/70">
+        <h1 className="font-heading text-2xl leading-none">Dashboard</h1>
+        <p className="mt-1.5 text-xs text-muted-foreground/60">
           Support operations overview
         </p>
       </div>
@@ -65,16 +65,18 @@ export default async function DashboardPage() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <ConversationsChart data={convOverTime} />
         </div>
-        <StatusDonut data={statusBreakdown} />
+        <div className="min-w-0">
+          <StatusDonut data={statusBreakdown} />
+        </div>
       </div>
 
       {/* Bottom row */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <EscalationsTable data={escalations} />
-        <AgentActivityList data={agentActivity} />
+        <div className="min-w-0"><EscalationsTable data={escalations} /></div>
+        <div className="min-w-0"><AgentActivityList data={agentActivity} /></div>
       </div>
     </div>
   )

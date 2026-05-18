@@ -40,6 +40,7 @@ export function ConversationsChart({ data }: ConversationsChartProps) {
           ))}
         </div>
       </div>
+      <div className="w-full overflow-hidden">
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data} barSize={22} barCategoryGap="35%">
           <XAxis
@@ -62,6 +63,7 @@ export function ConversationsChart({ data }: ConversationsChartProps) {
           <Bar dataKey="agentHandled" name="Agent Handled" stackId="a" fill="hsl(220 81% 65%)" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   )
 }
@@ -78,6 +80,7 @@ export function StatusDonut({ data }: StatusDonutProps) {
         <h2 className="text-sm font-semibold tracking-tight">Status</h2>
         <p className="mt-0.5 text-[11px] text-muted-foreground/60">Breakdown</p>
       </div>
+      <div className="w-full overflow-hidden">
       <ResponsiveContainer width="100%" height={140}>
         <PieChart>
           <Pie
@@ -98,6 +101,7 @@ export function StatusDonut({ data }: StatusDonutProps) {
           <Tooltip contentStyle={tooltipStyle} />
         </PieChart>
       </ResponsiveContainer>
+      </div>
       <div className="mt-2 grid grid-cols-2 gap-y-1.5 gap-x-3">
         {data.map((entry) => (
           <div key={entry.status} className="flex items-center gap-1.5">
