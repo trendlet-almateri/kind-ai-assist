@@ -38,7 +38,13 @@ export async function inviteAgentAction(
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${authSession?.access_token ?? ''}`,
       },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify({
+        ...parsed.data,
+        // Edge function requires full_name — derive it from username automatically
+        full_name: parsed.data.username
+          .replace(/[._-]+/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase()),
+      }),
     }
   )
 
