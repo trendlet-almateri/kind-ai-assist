@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck } from 'lucide-react'
+import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, getDateLabel, formatTime } from '@/lib/utils'
 import type { Message } from '@/types/database'
@@ -205,6 +205,13 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
               Conversation resolved · reopen in details to reply
             </p>
           </div>
+        ) : inputLocked ? (
+          <div className="flex items-center justify-center gap-2.5 rounded-2xl bg-success/8 border border-success/20 px-4 py-3.5">
+            <ShieldCheck className="h-4 w-4 text-success/70 shrink-0" />
+            <p className="text-xs text-success/70 font-medium">
+              AI is handling this · take over in details to reply
+            </p>
+          </div>
         ) : (
           <div className="flex items-end gap-2">
             <textarea
@@ -212,20 +219,19 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={inputLocked || isSending}
-              placeholder={inputLocked ? 'AI is handling this conversation…' : 'Type a message…'}
+              disabled={isSending}
+              placeholder="Type a message…"
               rows={1}
               className={cn(
                 'flex-1 resize-none rounded-2xl border border-border/50 bg-background/80 px-4 py-3',
                 'text-sm placeholder:text-muted-foreground/35 leading-relaxed',
                 'focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/30',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
                 'min-h-[46px] max-h-32 overflow-y-hidden',
               )}
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || inputLocked || isSending}
+              disabled={!input.trim() || isSending}
               className={cn(
                 'flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl',
                 'bg-primary text-primary-foreground',
