@@ -139,36 +139,39 @@ export function AgentsShell({ agents, currentUserId }: Props) {
   }
 
   return (
-    <div className="p-4 pt-16 lg:p-6 lg:pt-6 space-y-6 font-agent">
+    <div className="p-4 pt-20 lg:p-6 lg:pt-6 space-y-5 font-agent">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl leading-none">Agents</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{agents.length} agents total</p>
+          <p className="mt-1.5 text-xs text-muted-foreground/60">{agents.length} agents total</p>
         </div>
         <button
           onClick={() => setShowInvite(true)}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           <UserPlus className="h-4 w-4" />
-          Invite Agent
+          <span className="hidden sm:inline">Invite Agent</span>
+          <span className="sm:hidden">Invite</span>
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-64">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+        <div className="relative flex-1 sm:w-64 sm:flex-none">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-            placeholder="Search name, email, username…"
+            placeholder="Search name, email…"
             className="w-full rounded-xl border border-border bg-card pl-9 pr-3 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
-        <FilterDropdown value={roleFilter}   onChange={(v) => { setRoleFilter(v);   setPage(0) }} options={ROLE_OPTIONS}   />
-        <FilterDropdown value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(0) }} options={STATUS_OPTIONS} />
+        <div className="flex gap-2">
+          <FilterDropdown value={roleFilter}   onChange={(v) => { setRoleFilter(v);   setPage(0) }} options={ROLE_OPTIONS}   />
+          <FilterDropdown value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(0) }} options={STATUS_OPTIONS} />
+        </div>
       </div>
 
       {/* Table */}

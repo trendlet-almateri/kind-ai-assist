@@ -110,7 +110,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
   }
 
   return (
-    <div className="p-4 pt-16 lg:p-8 lg:pt-8 font-agent min-h-screen">
+    <div className="p-4 pt-20 lg:p-8 lg:pt-8 font-agent min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-heading text-2xl leading-none">Workspace &amp; AI</h1>
