@@ -117,14 +117,8 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     tools,
   }
 
-  // Also attach file search if vector store is configured
-  if (settings.openai_vector_store_id) {
-    requestParams.tools = [...tools, { type: 'file_search' }]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(requestParams as any).tool_resources = {
-      file_search: { vector_store_ids: [settings.openai_vector_store_id] },
-    }
-  }
+  // Note: file_search is Assistants API only — not supported in Chat Completions.
+  // Knowledge base lookups are handled by the system prompt + function tools only.
 
   let replyText: string
   let tokensUsed: number | null = null
