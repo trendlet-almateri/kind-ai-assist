@@ -76,6 +76,31 @@ export async function loginAction(
   redirect(profile.role === 'admin' ? '/dashboard' : '/inbox')
 }
 
+// ── Complete invite (set role cookies after password is set) ────────────────
+export async function completeInviteAction(): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('agent_profiles')
+    .select('status, role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) redirect('/login')
+
+  // Mirror what loginAction does — cache role in cookies for middleware
+  const cookieStore = await cookies()
+  const cookieOpts = { path: '/', httpOnly: true, sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7 }
+  cookieStore.set('x-user-role',   profile.role,   cookieOpts)
+  cookieStore.set('x-user-status', profile.status, cookieOpts)
+
+  revalidatePath('/', 'layout')
+  redirect(profile.role === 'admin' ? '/dashboard' : '/inbox')
+}
+
 // ── Logout ──────────────────────────────────────────────────────────────────
 export async function logoutAction(): Promise<void> {
   const supabase = await createSupabaseServerClient()

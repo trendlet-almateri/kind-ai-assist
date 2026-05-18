@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useActionState } from 'react'
+import { useState, useMemo, useActionState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   UserPlus, Search, Pencil, Archive, ShieldCheck, ShieldOff,
@@ -453,10 +453,13 @@ function AgentDetailModal({
 function InviteModal({ onClose }: { onClose: () => void }) {
   const [state, formAction, isPending] = useActionState(inviteAgentAction, {})
 
-  if (state.data) {
-    toast.success('Invitation sent successfully')
-    onClose()
-  }
+  useEffect(() => {
+    if (state.data) {
+      toast.success('Invitation sent successfully')
+      onClose()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.data])
 
   return (
     <motion.div
