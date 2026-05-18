@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Inbox, BookOpen, Users,
-  BrainCircuit, ChevronLeft, LogOut, Menu,
+  BrainCircuit, ChevronLeft, LogOut, Menu, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logoutAction } from '@/features/auth/actions'
@@ -133,40 +133,48 @@ export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSid
       </nav>
 
       {/* ── AI Status Badge ─────────────────────────────────────────── */}
-      {!collapsed && (
-        <div className="mx-3 mb-3">
+      <div className="mx-3 mb-3">
+        <div className={cn(
+          'flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-300',
+          aiEnabled
+            ? 'bg-success/[0.06] border-success/20'
+            : 'bg-muted/40 border-border/50'
+        )}>
+          {/* Icon */}
           <div className={cn(
-            'relative overflow-hidden rounded-xl px-3.5 py-3 transition-all duration-500',
-            aiEnabled
-              ? 'bg-gradient-to-r from-success/[0.10] to-success/[0.03] border border-success/20'
-              : 'bg-gradient-to-r from-destructive/[0.06] to-transparent border border-destructive/15'
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-300',
+            aiEnabled ? 'bg-success/15' : 'bg-muted'
           )}>
-            <div className={cn(
-              'absolute -top-3 -right-3 h-12 w-12 rounded-full blur-xl transition-colors duration-500',
-              aiEnabled ? 'bg-success/20' : 'bg-destructive/10'
+            <Sparkles className={cn(
+              'h-3.5 w-3.5 transition-colors duration-300',
+              aiEnabled ? 'text-success' : 'text-muted-foreground/40'
             )} />
-            <div className="relative flex items-center gap-2.5">
-              <span className={cn(
-                'flex h-2 w-2 shrink-0 rounded-full',
-                aiEnabled
-                  ? 'bg-success shadow-[0_0_6px_hsl(var(--success)/0.7)] animate-pulse-glow'
-                  : 'bg-destructive/70'
-              )} />
-              <div className="flex-1 min-w-0">
-                <p className={cn(
-                  'text-[11px] font-bold leading-none',
-                  aiEnabled ? 'text-success' : 'text-destructive/80'
-                )}>
-                  {aiEnabled ? 'Bot Active' : 'Bot Inactive'}
-                </p>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-none">
-                  {aiEnabled ? 'Auto-reply on' : 'Auto-reply paused'}
-                </p>
-              </div>
-            </div>
           </div>
+
+          {/* Text — hidden when collapsed */}
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold leading-none text-foreground/80">Auto Reply</p>
+              <p className={cn(
+                'text-[11px] font-medium mt-1 leading-none transition-colors duration-300',
+                aiEnabled ? 'text-success' : 'text-muted-foreground/50'
+              )}>
+                {aiEnabled ? 'AI is active' : 'Paused'}
+              </p>
+            </div>
+          )}
+
+          {/* Status dot — always visible */}
+          {!collapsed && (
+            <span className={cn(
+              'h-2 w-2 shrink-0 rounded-full transition-colors duration-300',
+              aiEnabled
+                ? 'bg-success shadow-[0_0_6px_hsl(var(--success)/0.8)] animate-pulse'
+                : 'bg-muted-foreground/30'
+            )} />
+          )}
         </div>
-      )}
+      </div>
 
       {/* ── User Footer ─────────────────────────────────────────────── */}
       <div className="shrink-0 border-t border-border/50 p-3">
