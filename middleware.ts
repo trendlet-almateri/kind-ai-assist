@@ -27,8 +27,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Routes that require authentication
 const PROTECTED_ROUTES  = ['/dashboard', '/inbox', '/knowledge', '/agents', '/settings']
-// Routes restricted to admins only
-const ADMIN_ONLY_ROUTES = ['/dashboard', '/agents', '/settings']
+// Routes restricted to admins only — agents are redirected to /inbox
+const ADMIN_ONLY_ROUTES = ['/dashboard', '/knowledge', '/agents', '/settings']
 // Routes that authenticated users should not see
 const AUTH_ROUTES       = ['/login']
 // Routes that must always be reachable regardless of auth state
@@ -75,8 +75,9 @@ export async function middleware(request: NextRequest) {
 
   // ── Step 3: Redirect authenticated users away from /login ──────────────
   if (user && AUTH_ROUTES.some((r) => pathname.startsWith(r))) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    const url  = request.nextUrl.clone()
+    const role = request.cookies.get('x-user-role')?.value
+    url.pathname = role === 'admin' ? '/dashboard' : '/inbox'
     return NextResponse.redirect(url)
   }
 

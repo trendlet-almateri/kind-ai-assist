@@ -35,7 +35,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard',     icon: LayoutDashboard, adminOnly: true  },
   { href: '/inbox',     label: 'Inbox',          icon: Inbox,           adminOnly: false },
-  { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen,        adminOnly: false },
+  { href: '/knowledge', label: 'Knowledge Base', icon: BookOpen,        adminOnly: true  },
   { href: '/agents',    label: 'Agents',         icon: Users,           adminOnly: true  },
   { href: '/settings',  label: 'Workspace & AI', icon: BrainCircuit,    adminOnly: true  },
 ]
