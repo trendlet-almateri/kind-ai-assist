@@ -139,10 +139,11 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
       // to a plain call so the AI can still reply to non-order questions.
       const errMsg = toolsErr instanceof Error ? toolsErr.message : String(toolsErr)
       console.error('[replyEngine] Tools call failed, falling back to no-tools:', errMsg)
-      const { tools: _tools, ...paramsWithoutTools } = requestParams as Record<string, unknown>
-      void _tools
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { tools: _tools, tool_resources: _tr, ...paramsWithoutTools } =
+        requestParams as unknown as Record<string, unknown>
       turn1 = await openai.chat.completions.create(
-        paramsWithoutTools as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming
+        paramsWithoutTools as unknown as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming
       )
     }
 

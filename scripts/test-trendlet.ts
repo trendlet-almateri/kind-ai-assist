@@ -8,13 +8,12 @@
  *   INTERNAL_AI_TOKEN=<token>
  */
 
-import { config } from 'dotenv'
-import { resolve } from 'path'
+export {}
 
-// Load .env.local before importing the client
-config({ path: resolve(process.cwd(), '.env.local') })
-
-// Must come AFTER dotenv loads
+/**
+ * Run with env vars pre-set:
+ *   $env:TRENDLET_API_BASE="https://trendlet.vercel.app"; $env:INTERNAL_AI_TOKEN="xxx"; npx tsx scripts/test-trendlet.ts 1209
+ */
 const { getOrderDetails, searchOrdersByEmail, getShipmentTracking } = await import('../server/ai/trendletClient.js')
 
 const ORDER_NUMBER = process.argv[2] ?? '1209'
