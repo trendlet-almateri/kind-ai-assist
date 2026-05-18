@@ -61,11 +61,12 @@ serve(async (req: Request) => {
     }
 
     // Parse request body
-    const { full_name, username, email, role } = await req.json() as {
-      full_name: string
-      username:  string
-      email:     string
-      role:      'admin' | 'agent'
+    const { full_name, username, email, role, redirect_url } = await req.json() as {
+      full_name:    string
+      username:     string
+      email:        string
+      role:         'admin' | 'agent'
+      redirect_url?: string   // passed from the Next.js action — the correct app URL
     }
 
     if (!full_name || !username || !email || !role) {
@@ -73,6 +74,11 @@ serve(async (req: Request) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
+
+    // Use the redirect URL from the request body (preferred — always correct),
+    // fall back to APP_URL secret, then localhost for local dev
+    const callbackUrl = redirect_url
+      ?? `${Deno.env.get('APP_URL') ?? 'http://localhost:3000'}/auth/callback`
 
     // Check username/email uniqueness
     const { data: existing } = await supabaseAdmin
@@ -98,7 +104,7 @@ serve(async (req: Request) => {
           role,
           workspace_id: callerProfile.workspace_id,
         },
-        redirectTo: `${Deno.env.get('APP_URL') ?? 'http://localhost:3000'}/auth/callback`,
+        redirectTo: callbackUrl,
       }
     )
 

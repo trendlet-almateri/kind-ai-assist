@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { createSupabaseServerClient } from '@/server/supabase/server'
 import { getServerSession } from '@/server/supabase/server'
 import { inviteAgentSchema } from '@/lib/validators/invite'
@@ -26,6 +27,13 @@ export async function inviteAgentAction(
     return { error: parsed.error.errors[0].message }
   }
 
+  // Derive the app's public URL from the incoming request headers —
+  // works automatically on Vercel, localhost, and any custom domain
+  const reqHeaders = await headers()
+  const host  = reqHeaders.get('host')               ?? 'localhost:3000'
+  const proto = reqHeaders.get('x-forwarded-proto')  ?? 'http'
+  const appUrl = `${proto}://${host}`
+
   // Call the edge function — it has the service role key to invite users
   const supabase = await createSupabaseServerClient()
   const { data: { session: authSession } } = await supabase.auth.getSession()
@@ -44,6 +52,8 @@ export async function inviteAgentAction(
         full_name: parsed.data.username
           .replace(/[._-]+/g, ' ')
           .replace(/\b\w/g, (c) => c.toUpperCase()),
+        // Pass the correct redirect URL so the email link goes to the right place
+        redirect_url: `${appUrl}/auth/callback`,
       }),
     }
   )

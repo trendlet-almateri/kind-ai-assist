@@ -32,6 +32,15 @@ export function LoginForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // If an invite link was misconfigured and lands on /login with the invite hash,
+  // redirect to /accept-invite so it can be handled correctly there.
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash.includes('type=invite') && hash.includes('access_token=')) {
+      window.location.replace('/accept-invite' + hash)
+    }
+  }, [])
+
   return (
     <div className="flex min-h-screen">
 

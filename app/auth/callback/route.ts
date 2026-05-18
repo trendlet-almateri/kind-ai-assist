@@ -56,8 +56,10 @@ export async function GET(request: Request) {
     console.error('[auth/callback] verifyOtp error:', error.message)
   }
 
-  // ── Fallback: something went wrong ─────────────────────────────────────────
-  return NextResponse.redirect(
-    `${origin}/login?error=${encodeURIComponent('Invalid or expired link — please try again.')}`
-  )
+  // ── Fallback: no recognised params ────────────────────────────────────────
+  // Hash fragments (#access_token=…) are browser-only — the server never sees them.
+  // If the user was sent here via the implicit flow, the Route Handler will have no
+  // query params. Redirect to /accept-invite; that page's client component reads the
+  // hash from window.location and calls setSession() to establish the session.
+  return NextResponse.redirect(`${origin}/accept-invite`)
 }
