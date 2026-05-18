@@ -90,7 +90,7 @@ export async function saveSystemPromptAction(
   if (error) return { error: error.message }
 
   revalidatePath('/settings')
-  return {}
+  return { data: true }
 }
 
 // ── Delete system prompt ──────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState } from 'react'
+import { useState, useActionState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Save, Plus, Trash2, Bot, Clock, Shield,
@@ -347,10 +347,12 @@ function PromptEditor({
   const [isActive,    setIsActive]    = useState(prompt.is_active ?? false)
   const [deleting,    setDeleting]    = useState(false)
 
-  if (state.data !== undefined) {
-    toast.success('Prompt saved')
-    onSaved()
-  }
+  useEffect(() => {
+    if (state.data) {
+      toast.success('Prompt saved')
+      onSaved()
+    }
+  }, [state.data])
 
   const handleDelete = async () => {
     if (!prompt.id || isNew) return
