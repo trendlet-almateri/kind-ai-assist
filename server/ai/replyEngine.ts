@@ -6,19 +6,24 @@
  * 1. Fetch workspace settings (AI enabled? active system prompt? vector store?)
  * 2. If AI disabled or conversation assigned to human → skip
  * 3. Build message history (last 10 messages for context)
- * 4. Call OpenAI with:
+ * 4. Call OpenAI Responses API with:
  *    - Active system prompt (+ order display rules injection)
  *    - Conversation history
  *    - Trendlet order/tracking tools (function calling)
- *    - File search tool (if vector store configured)
- * 5. If finish_reason='tool_calls' → execute Trendlet tools → Turn 2 (max 2 turns)
+ *    - file_search tool (if vector store configured) — knowledge base
+ * 5. If function tools called → execute → Turn 2 (max 2 turns)
+ *    file_search is handled automatically by OpenAI (no manual loop needed)
  * 6. Save AI reply to messages table
  * 7. Send reply via WhatsApp
- * 8. Check escalation keywords → flag if needed
+ *
+ * WHY Responses API (not Chat Completions):
+ * - Chat Completions does NOT support file_search as a built-in tool.
+ * - Responses API supports file_search + function tools in the same call.
+ * - SDK v4.76+ required (we use v4.98).
  *
  * WHY we don't stream here:
  * - WhatsApp doesn't support streaming responses.
- * - We need the full text to check escalation keywords before sending.
+ * - We need the full text before sending.
  */
 
 import 'server-only'
@@ -91,106 +96,80 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     (prompt?.content ?? 'You are a helpful customer support agent. Be concise, professional, and empathetic.') +
     orderRules
 
-  const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inputMessages: any[] = [
     { role: 'system', content: systemContent },
     ...messages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => ({
-        role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-        content: m.content,
-      })),
+      .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
   ]
 
-  // ── 5. Call OpenAI (with 2-turn tool loop) ────────────────────────────────
+  // ── 5. Call OpenAI Responses API ─────────────────────────────────────────
   const model       = prompt?.model ?? 'gpt-4o'
   const temperature = prompt?.temperature ?? 0.7
 
-  // Always include Trendlet function-calling tools
+  // Build tools: Trendlet function tools always + file_search if vector store set
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: any[] = [...trendletToolDefs]
-
-  const requestParams: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
-    model,
-    temperature,
-    messages: openAiMessages,
-    max_tokens: 500,
-    tools,
+  if (settings.openai_vector_store_id) {
+    tools.unshift({ type: 'file_search', vector_store_ids: [settings.openai_vector_store_id] })
   }
 
-  // Note: file_search is Assistants API only — not supported in Chat Completions.
-  // Knowledge base lookups are handled by the system prompt + function tools only.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const responsesApi = (openai as any).responses
 
   let replyText: string
   let tokensUsed: number | null = null
 
   try {
-    // Turn 1 — let OpenAI decide whether to call a tool or reply directly
-    let turn1
-    try {
-      turn1 = await openai.chat.completions.create(requestParams)
-    } catch (toolsErr) {
-      // If the tools-enabled call fails (e.g. model/schema mismatch), fall back
-      // to a plain call so the AI can still reply to non-order questions.
-      const errMsg = toolsErr instanceof Error ? toolsErr.message : String(toolsErr)
-      console.error('[replyEngine] Tools call failed, falling back to no-tools:', errMsg)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { tools: _tools, tool_resources: _tr, ...paramsWithoutTools } =
-        requestParams as unknown as Record<string, unknown>
-      turn1 = await openai.chat.completions.create(
-        paramsWithoutTools as unknown as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming
-      )
+    // Turn 1 — OpenAI handles file_search internally; function_call items need manual execution
+    const resp1 = await responsesApi.create({
+      model,
+      input:            inputMessages,
+      tools,
+      temperature,
+      max_output_tokens: 800,
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const functionCalls: any[] = (resp1.output ?? []).filter((item: any) => item.type === 'function_call')
+
+    // Escalation check — hand off to human and stop
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (functionCalls.some((fc: any) => fc.name === 'escalate_to_human')) {
+      await db.from('conversations').update({ is_ai_active: false }).eq('id', ctx.conversationId)
+      console.log(`[replyEngine] Escalated to human — conversation ${ctx.conversationId}`)
+      return
     }
 
-    const choice1    = turn1.choices[0]
-    const toolCalls  = choice1?.message?.tool_calls
-
-    if (choice1?.finish_reason === 'tool_calls' && toolCalls?.length) {
-      // Check for escalation first — if requested, hand off to human and stop
-      const hasEscalation = toolCalls.some((tc) => tc.function.name === 'escalate_to_human')
-      if (hasEscalation) {
-        await db
-          .from('conversations')
-          .update({ is_ai_active: false })
-          .eq('id', ctx.conversationId)
-        console.log(`[replyEngine] Escalated to human for conversation ${ctx.conversationId}`)
-        return // Do not send any AI reply — human takes over
-      }
-
-      // Execute each Trendlet tool call in parallel
-      const toolResults = await Promise.all(
-        toolCalls.map(async (tc) => {
-          const args   = JSON.parse(tc.function.arguments) as Record<string, string>
-          const result = await executeTrendletTool(tc.function.name, args)
-          console.log(`[replyEngine] Tool ${tc.function.name} → found=${JSON.parse(result).found}`)
-          return {
-            role:         'tool' as const,
-            tool_call_id: tc.id,
-            content:      result,
-          }
+    if (functionCalls.length > 0) {
+      // Execute Trendlet tool calls in parallel
+      const toolOutputs = await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        functionCalls.map(async (fc: any) => {
+          const args   = JSON.parse(fc.arguments) as Record<string, string>
+          const result = await executeTrendletTool(fc.name, args)
+          console.log(`[replyEngine] Tool ${fc.name} → found=${JSON.parse(result).found}`)
+          return { type: 'function_call_output', call_id: fc.call_id, output: result }
         })
       )
 
-      // Turn 2 — send tool results back and get the final reply
-      const turn2Messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        ...openAiMessages,
-        choice1.message,  // assistant message containing the tool_calls
-        ...toolResults,
-      ]
-
-      const turn2 = await openai.chat.completions.create({
+      // Turn 2 — append tool outputs and get final reply
+      const resp2 = await responsesApi.create({
         model,
+        input:            [...inputMessages, ...(resp1.output ?? []), ...toolOutputs],
+        tools,
         temperature,
-        messages: turn2Messages,
-        max_tokens: 800,
+        max_output_tokens: 800,
       })
 
-      replyText  = turn2.choices[0]?.message?.content ?? 'I apologize, I was unable to process your request.'
-      tokensUsed = (turn1.usage?.total_tokens ?? 0) + (turn2.usage?.total_tokens ?? 0)
+      replyText  = resp2.output_text ?? 'I apologize, I was unable to process your request.'
+      tokensUsed = (resp1.usage?.total_tokens ?? 0) + (resp2.usage?.total_tokens ?? 0)
 
     } else {
-      // No tool calls — use the direct reply
-      replyText  = choice1?.message?.content ?? 'I apologize, I was unable to process your request.'
-      tokensUsed = turn1.usage?.total_tokens ?? null
+      // No function calls — direct reply (file_search already handled by OpenAI internally)
+      replyText  = resp1.output_text ?? 'I apologize, I was unable to process your request.'
+      tokensUsed = resp1.usage?.total_tokens ?? null
     }
 
   } catch (err) {
@@ -224,9 +203,6 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
   // The Postgres trigger handles this automatically on message insert,
   // but we double-check here for immediate handling if needed.
 }
-
-// ── Import type ───────────────────────────────────────────────────────────────
-import type OpenAI from 'openai'
 
 /** Detect Arabic characters — used to choose label_ar vs label_en in order status */
 function isArabic(text: string): boolean {
