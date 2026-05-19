@@ -29,7 +29,7 @@
 import 'server-only'
 import { getOpenAIClient } from './openai'
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
-import { trendletToolDefs, executeTrendletTool } from './trendletTools'
+import { trendletResponsesToolDefs, executeTrendletTool } from './trendletTools'
 
 /**
  * A provider-agnostic "send a text reply to this customer" function.
@@ -110,7 +110,7 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
 
   // Build tools: Trendlet function tools always + file_search if vector store set
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tools: any[] = [...trendletToolDefs]
+  const tools: any[] = [...trendletResponsesToolDefs]
   if (settings.openai_vector_store_id) {
     tools.unshift({ type: 'file_search', vector_store_ids: [settings.openai_vector_store_id] })
   }
