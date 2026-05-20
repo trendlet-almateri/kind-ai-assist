@@ -36,8 +36,12 @@ const KEYS = {
 
 // ── Conversations list ────────────────────────────────────────────────────────
 export function useConversations(filter: ConvFilter, userId?: string) {
-  const id = useId()
-  const qc = useQueryClient()
+  const id          = useId()
+  const qc          = useQueryClient()
+  // Deduplication: prevent the same conversation from firing the escalation toast
+  // more than once within 10 seconds. Needed because doEscalation() inserts 2 messages
+  // which trigger DB-level updated_at bumps on conversations — each fires a Realtime UPDATE.
+  const toastedIds  = useRef<Set<string>>(new Set())
 
   const query = useQuery({
     queryKey: KEYS.conversations(filter, userId),
@@ -81,15 +85,23 @@ export function useConversations(filter: ConvFilter, userId?: string) {
         (payload: any) => {
           const newRow = payload.new as Conversation
           const oldRow = payload.old as Partial<Conversation>
-          // Fire toast when conversation newly enters the escalation queue
+          // Fire toast when conversation newly enters the escalation queue.
+          // Guard with toastedIds to prevent duplicate toasts — doEscalation() inserts
+          // 2 messages which each trigger a DB updated_at bump on conversations,
+          // causing 3 Realtime UPDATE events for a single escalation action.
           if (newRow.needs_human_review && !oldRow.needs_human_review) {
-            toast.warning(
-              `New escalation: ${newRow.customer_name ?? newRow.customer_phone ?? 'Unknown'}`,
-              {
-                description: newRow.escalation_reason ?? undefined,
-                duration: 8000,
-              }
-            )
+            if (!toastedIds.current.has(newRow.id)) {
+              toastedIds.current.add(newRow.id)
+              toast.warning(
+                `New escalation: ${newRow.customer_name ?? newRow.customer_phone ?? 'Unknown'}`,
+                {
+                  description: newRow.escalation_reason ?? undefined,
+                  duration: 8000,
+                }
+              )
+              // Clear after 10s so a genuine re-escalation in a new session can still toast
+              setTimeout(() => toastedIds.current.delete(newRow.id), 10_000)
+            }
           }
           qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] })
         }
