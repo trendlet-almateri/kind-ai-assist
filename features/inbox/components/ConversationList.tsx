@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn, timeAgo, getInitial, getAvatarColor } from '@/lib/utils'
 import { Search, Bot, User, SlidersHorizontal, Check, MessageCircle, CheckCheck, AlertTriangle } from 'lucide-react'
+import { useQueueCount } from '@/features/inbox/hooks/useInboxData'
 import type { Conversation } from '@/types/database'
 import type { ConvFilter } from '@/types'
 
@@ -47,9 +48,23 @@ export function ConversationList({
   conversations, lastMessages, isLoading, selectedId,
   filter, onSelect, onFilterChange, search, onSearch,
 }: Props) {
-  const [filterOpen, setFilterOpen]       = useState(false)
+  const [filterOpen, setFilterOpen]         = useState(false)
   const [handlingFilter, setHandlingFilter] = useState<string[]>([])
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [pulse, setPulse]                   = useState(false)
+  const dropdownRef  = useRef<HTMLDivElement>(null)
+  const prevCount    = useRef(0)
+  const { data: queueCount = 0 } = useQueueCount()
+
+  // Trigger a brief pulse animation whenever the count increases (new item arrives)
+  useEffect(() => {
+    if (queueCount > prevCount.current) {
+      setPulse(true)
+      const t = setTimeout(() => setPulse(false), 600)
+      prevCount.current = queueCount
+      return () => clearTimeout(t)
+    }
+    prevCount.current = queueCount
+  }, [queueCount])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -110,20 +125,43 @@ export function ConversationList({
       {/* ── Filter tabs + dropdown ────────────────────────────── */}
       <div className="flex items-center px-3 pb-2 gap-1">
         <div className="flex flex-1 gap-1">
-          {FILTER_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => onFilterChange(tab.key)}
-              className={cn(
-                'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 relative',
-                filter === tab.key
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {FILTER_TABS.map((tab) => {
+            const isQueue  = tab.key === 'needs_review'
+            const isActive = filter === tab.key
+            // Badge: only on Queue tab, only when count > 0, hidden when tab is active
+            const showBadge = isQueue && queueCount > 0 && !isActive
+            return (
+              <button
+                key={tab.key}
+                onClick={() => onFilterChange(tab.key)}
+                className={cn(
+                  'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 relative',
+                  'inline-flex items-center justify-center gap-1.5',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                )}
+              >
+                {tab.label}
+                {isQueue && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center justify-center rounded-full bg-amber-500 text-white font-bold tabular-nums',
+                      'min-w-[16px] h-[16px] px-1 text-[9px] leading-none',
+                      'transition-all duration-300',
+                      showBadge
+                        ? 'opacity-100 scale-100'
+                        : 'opacity-0 scale-75 pointer-events-none',
+                      pulse && showBadge && 'animate-ping-once',
+                    )}
+                    aria-hidden={!showBadge}
+                  >
+                    {queueCount > 99 ? '99+' : queueCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {/* Filter dropdown trigger */}

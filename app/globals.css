@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  /* Single pop animation for queue badge when count increases */
+  @keyframes ping-once {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+  .animate-ping-once {
+    animation: ping-once 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+}
+
 @layer base {
   :root {
     /* Background: #151412 → warm espresso */
