@@ -105,7 +105,16 @@ export function InboxShell({ profile, aiEnabled }: InboxShellProps) {
       const workspaceId = conversations.find((c) => c.id === id)?.workspace_id ?? ''
       resolveConversation.mutate(
         { conversationId: id, agentId: profile.id, workspaceId, reopen },
-        { onSuccess: () => { if (!reopen) setSelectedId(null) } }
+        {
+          onSuccess: () => {
+            if (reopen) {
+              // Switch to All tab so the reopened conversation stays visible + selected
+              setFilter('all')
+            } else {
+              setSelectedId(null)
+            }
+          },
+        }
       )
     },
     [resolveConversation, profile.id, conversations]
