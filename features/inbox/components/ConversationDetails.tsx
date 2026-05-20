@@ -8,7 +8,7 @@ import {
 import { useState, useRef, useEffect } from 'react'
 import { cn, formatDateTime, timeAgo, getInitial, getAvatarColor } from '@/lib/utils'
 import type { Conversation, TakeoverEvent, AgentProfile } from '@/types/database'
-import { useAssignToMe } from '@/features/inbox/hooks/useInboxData'
+import { useAssignToMe, useMarkAsReviewed } from '@/features/inbox/hooks/useInboxData'
 
 const ACTIVITY_PAGE_SIZE = 5
 
@@ -49,7 +49,8 @@ export function ConversationDetails({
   const [activityOpen, setActivityOpen]     = useState(false)
   const [agentDropOpen, setAgentDropOpen]   = useState(false)
   const agentDropRef                        = useRef<HTMLDivElement>(null)
-  const assignToMe                          = useAssignToMe()
+  const assignToMe    = useAssignToMe()
+  const markReviewed  = useMarkAsReviewed()
 
   // Reset activity page + auto-open log only when events exist
   useEffect(() => {
@@ -304,7 +305,11 @@ export function ConversationDetails({
             {/* Assign to Me — only shown if unassigned */}
             {!conversation.assigned_agent && (
               <button
-                onClick={() => assignToMe.mutate({ conversationId: conversation.id, agentId: currentAgentId })}
+                onClick={() => assignToMe.mutate({
+                  conversationId: conversation.id,
+                  agentId:        currentAgentId,
+                  workspaceId:    conversation.workspace_id,
+                })}
                 disabled={assignToMe.isPending}
                 className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-2.5 text-xs font-semibold text-white hover:bg-amber-600 transition-colors active:scale-[0.98] disabled:opacity-50"
               >
@@ -313,17 +318,18 @@ export function ConversationDetails({
               </button>
             )}
 
-            {/* Mark as reviewed (clears the escalation flag) */}
+            {/* Mark as reviewed — clears escalation flag + logs to activity */}
             <button
-              onClick={() => onUpdateConversation(conversation.id, {
-                needs_human_review: false,
-                escalation_reason: null,
-                ai_pause_reason: null,
+              onClick={() => markReviewed.mutate({
+                conversationId: conversation.id,
+                agentId:        currentAgentId,
+                workspaceId:    conversation.workspace_id,
               })}
-              className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border/60 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors active:scale-[0.98]"
+              disabled={markReviewed.isPending}
+              className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border/60 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors active:scale-[0.98] disabled:opacity-50"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Mark as Reviewed
+              {markReviewed.isPending ? 'Reviewing…' : 'Mark as Reviewed'}
             </button>
           </div>
         </SectionCard>
@@ -397,25 +403,37 @@ export function ConversationDetails({
                     const isHuman       = event.event_type === 'human_took_over'
                     const isResolved    = event.event_type === 'conversation_resolved'
                     const isReopened    = event.event_type === 'conversation_reopened'
+                    const isAssigned    = event.event_type === 'agent_assigned'
+                    const isReviewed    = event.event_type === 'escalation_reviewed'
                     const agent         = event.agent_id ? agents.find((a) => a.id === event.agent_id) : null
                     const name          = agent?.full_name ?? (isAiEscalated ? 'AI System' : 'Unknown')
                     const initial       = name.charAt(0).toUpperCase()
 
+                    const avatarColor =
+                      isAiEscalated ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40' :
+                      isHuman       ? 'bg-warning/20 text-warning'        :
+                      isAssigned    ? 'bg-blue-500/20 text-blue-400'      :
+                      isReviewed    ? 'bg-success/20 text-success'        :
+                      isResolved    ? 'bg-muted/60 text-muted-foreground' :
+                                      'bg-primary/20 text-primary'
+
+                    const actionLabel =
+                      isAiEscalated ? ' escalated to human' :
+                      isHuman       ? ' took over'          :
+                      isAssigned    ? ' assigned to self'   :
+                      isReviewed    ? ' marked as reviewed' :
+                      isResolved    ? ' resolved'           :
+                      isReopened    ? ' reopened'           :
+                                      ' returned to AI'
+
                     return (
                       <div key={event.id} className="flex items-start gap-2.5">
-                        {/* Avatar — Bot icon for AI events, initials for human events */}
                         {isAiEscalated ? (
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                          <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full', avatarColor)}>
                             <Bot className="h-3.5 w-3.5" />
                           </div>
                         ) : (
-                          <div className={cn(
-                            'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                            isHuman             ? 'bg-warning/20 text-warning'     :
-                            isResolved          ? 'bg-muted/60 text-muted-foreground' :
-                            isReopened          ? 'bg-primary/20 text-primary'     :
-                                                  'bg-primary/20 text-primary'
-                          )}>
+                          <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold', avatarColor)}>
                             {initial}
                           </div>
                         )}
@@ -423,13 +441,7 @@ export function ConversationDetails({
                         <div className="flex-1 min-w-0">
                           <p className="text-xs leading-snug">
                             <span className="font-bold text-foreground">{name}</span>
-                            <span className="text-muted-foreground/70">
-                              {isAiEscalated ? ' escalated to human' :
-                               isHuman       ? ' took over'          :
-                               isResolved    ? ' resolved'           :
-                               isReopened    ? ' reopened'           :
-                                               ' returned to AI'}
-                            </span>
+                            <span className="text-muted-foreground/70">{actionLabel}</span>
                           </p>
                           {event.note && (
                             <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-relaxed">{event.note}</p>

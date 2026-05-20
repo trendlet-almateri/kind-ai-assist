@@ -418,29 +418,92 @@ export function useAgentsList() {
 // ── Atomic "Assign to Me" ─────────────────────────────────────────────────────
 // Uses a conditional UPDATE (assigned_agent IS NULL) to prevent race conditions
 // when multiple agents try to claim the same conversation simultaneously.
+// Also clears the escalation flag and logs an agent_assigned event.
 export function useAssignToMe() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ conversationId, agentId }: { conversationId: string; agentId: string }) => {
+    mutationFn: async ({
+      conversationId,
+      agentId,
+      workspaceId,
+    }: {
+      conversationId: string
+      agentId:        string
+      workspaceId:    string
+    }) => {
+      // Atomic claim — only succeeds if still unassigned
       const { data, error } = await supabase
         .from('conversations')
         .update({
-          assigned_agent: agentId,
-          status:         'assigned',
-          updated_at:     new Date().toISOString(),
+          assigned_agent:      agentId,
+          status:              'assigned',
+          needs_human_review:  false,   // Remove from queue — agent has taken ownership
+          escalation_reason:   null,
+          ai_pause_reason:     null,
+          updated_at:          new Date().toISOString(),
         })
         .eq('id', conversationId)
-        .is('assigned_agent', null)   // Only claim if still unassigned (atomic guard)
+        .is('assigned_agent', null)
         .select('id')
         .single()
 
       if (error || !data) {
         throw new Error('This conversation was just assigned to another agent')
       }
+
+      // Log to activity — non-fatal
+      await supabase.from('takeover_events').insert({
+        workspace_id:    workspaceId,
+        conversation_id: conversationId,
+        agent_id:        agentId,
+        event_type:      'agent_assigned',
+        note:            'Agent assigned themselves to this conversation',
+      })
+
       return data
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['inbox'] }) },
     onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+// ── Mark as Reviewed ──────────────────────────────────────────────────────────
+// Clears the escalation flag without claiming the conversation.
+// Logs an escalation_reviewed event to the activity log.
+export function useMarkAsReviewed() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      agentId,
+      workspaceId,
+    }: {
+      conversationId: string
+      agentId:        string
+      workspaceId:    string
+    }) => {
+      const { error } = await supabase
+        .from('conversations')
+        .update({
+          needs_human_review: false,
+          escalation_reason:  null,
+          ai_pause_reason:    null,
+          updated_at:         new Date().toISOString(),
+        })
+        .eq('id', conversationId)
+
+      if (error) throw error
+
+      await supabase.from('takeover_events').insert({
+        workspace_id:    workspaceId,
+        conversation_id: conversationId,
+        agent_id:        agentId,
+        event_type:      'escalation_reviewed',
+        note:            'Agent reviewed and cleared the escalation',
+      })
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inbox'] }) },
+    onError:   (err: Error) => toast.error(err.message),
   })
 }
 

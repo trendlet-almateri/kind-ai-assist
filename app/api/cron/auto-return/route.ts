@@ -89,6 +89,7 @@ export async function GET(req: NextRequest) {
       status:              'open',
       assigned_agent:      null,
       agent_last_reply_at: null,
+      session_started_at:  now,   // Reset session boundary so AI cannot see old escalation messages
       updated_at:          now,
     })
     .in('id', ids)
