@@ -17,7 +17,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useCallback, useId } from 'react'
+import { useEffect, useCallback, useId, useRef } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/server/supabase/client'
 import { buildReopenPayload } from '@/lib/conversation'
