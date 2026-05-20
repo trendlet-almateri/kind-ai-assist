@@ -3,11 +3,12 @@
 import {
   UserCheck, Shield, AlertTriangle,
   CheckCircle2, Activity, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  Phone, Sparkles, Check, CheckCheck, RotateCcw,
+  Phone, Sparkles, Check, CheckCheck, RotateCcw, Bot,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
-import { cn, formatDateTime, getInitial, getAvatarColor } from '@/lib/utils'
+import { cn, formatDateTime, timeAgo, getInitial, getAvatarColor } from '@/lib/utils'
 import type { Conversation, TakeoverEvent, AgentProfile } from '@/types/database'
+import { useAssignToMe } from '@/features/inbox/hooks/useInboxData'
 
 const ACTIVITY_PAGE_SIZE = 5
 
@@ -15,6 +16,7 @@ interface Props {
   conversation:         Conversation | null
   takeoverEvents:       TakeoverEvent[]
   agents:               AgentProfile[]
+  currentAgentId:       string        // logged-in agent's id (for Assign to Me)
   aiEnabled:            boolean
   isAdmin:              boolean
   onToggleAI:           (id: string, active: boolean, workspaceId: string) => void
@@ -40,13 +42,14 @@ function SectionCard({ icon: Icon, label, children, className }: {
 }
 
 export function ConversationDetails({
-  conversation, takeoverEvents, agents, aiEnabled, isAdmin,
+  conversation, takeoverEvents, agents, currentAgentId, aiEnabled, isAdmin,
   onToggleAI, onUpdateConversation, onResolve,
 }: Props) {
   const [activityPage, setActivityPage]     = useState(0)
   const [activityOpen, setActivityOpen]     = useState(false)
   const [agentDropOpen, setAgentDropOpen]   = useState(false)
   const agentDropRef                        = useRef<HTMLDivElement>(null)
+  const assignToMe                          = useAssignToMe()
 
   // Reset activity page + auto-open log only when events exist
   useEffect(() => {
@@ -269,42 +272,62 @@ export function ConversationDetails({
         )}
       </SectionCard>
 
-      {/* ── Review Status ──────────────────────────────────────── */}
-      <SectionCard icon={CheckCircle2} label="Review Status">
-        {conversation.needs_human_review ? (
-          <div className="space-y-2">
-            <div className="flex items-start gap-2 rounded-lg bg-warning/10 border border-warning/20 px-3 py-2.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-warning">Needs Review</p>
-                {conversation.escalation_reason && (
-                  <p className="text-[10px] text-warning/70 mt-0.5 leading-relaxed">{conversation.escalation_reason}</p>
-                )}
+      {/* ── Escalation Queue Card ──────────────────────────────── */}
+      {conversation.needs_human_review && (
+        <SectionCard icon={AlertTriangle} label="Escalation" className="border-amber-200/60">
+          <div className="space-y-2.5">
+            {/* Status header */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <p className="text-xs font-bold text-amber-700">Waiting for human agent</p>
               </div>
+              <span className="text-[10px] text-amber-600 font-mono shrink-0">
+                {timeAgo(conversation.updated_at)}
+              </span>
             </div>
+
+            {/* Reason */}
+            {conversation.escalation_reason && (
+              <p className="text-[11px] text-amber-600/90 leading-relaxed bg-amber-50/80 rounded-lg px-2.5 py-2 border border-amber-100">
+                {conversation.escalation_reason}
+              </p>
+            )}
+
+            {/* AI pause reason */}
+            {conversation.ai_pause_reason && (
+              <p className="text-[10px] text-muted-foreground/50 capitalize">
+                AI paused: {conversation.ai_pause_reason.replace(/_/g, ' ')}
+              </p>
+            )}
+
+            {/* Assign to Me — only shown if unassigned */}
+            {!conversation.assigned_agent && (
+              <button
+                onClick={() => assignToMe.mutate({ conversationId: conversation.id, agentId: currentAgentId })}
+                disabled={assignToMe.isPending}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-2.5 text-xs font-semibold text-white hover:bg-amber-600 transition-colors active:scale-[0.98] disabled:opacity-50"
+              >
+                <UserCheck className="h-3.5 w-3.5" />
+                {assignToMe.isPending ? 'Assigning…' : 'Assign to Me'}
+              </button>
+            )}
+
+            {/* Mark as reviewed (clears the escalation flag) */}
             <button
               onClick={() => onUpdateConversation(conversation.id, {
                 needs_human_review: false,
                 escalation_reason: null,
+                ai_pause_reason: null,
               })}
-              className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-success/10 border border-success/20 py-2 text-xs font-semibold text-success hover:bg-success/15 transition-colors active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-border/60 py-2 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors active:scale-[0.98]"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
               Mark as Reviewed
             </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-2.5">
-            <div className="h-4 w-4 shrink-0 rounded border border-border/60 flex items-center justify-center">
-              <CheckCircle2 className="h-2.5 w-2.5 text-muted-foreground/30" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-primary">No Review Needed</p>
-              <p className="text-[10px] text-muted-foreground/50">All clear</p>
-            </div>
-          </div>
-        )}
-      </SectionCard>
+        </SectionCard>
+      )}
 
       {/* ── Resolve / Reopen ───────────────────────────────────── */}
       <SectionCard icon={CheckCheck} label="Conversation">
@@ -370,28 +393,47 @@ export function ConversationDetails({
               <>
                 <div className="space-y-3">
                   {pagedEvents.map((event) => {
-                    const agent   = agents.find((a) => a.id === event.agent_id)
-                    const isHuman = event.event_type === 'human_took_over'
-                    const name    = agent?.full_name ?? 'Unknown'
-                    const initial = name.charAt(0).toUpperCase()
+                    const isAiEscalated = event.event_type === 'ai_escalated'
+                    const isHuman       = event.event_type === 'human_took_over'
+                    const isResolved    = event.event_type === 'conversation_resolved'
+                    const isReopened    = event.event_type === 'conversation_reopened'
+                    const agent         = event.agent_id ? agents.find((a) => a.id === event.agent_id) : null
+                    const name          = agent?.full_name ?? (isAiEscalated ? 'AI System' : 'Unknown')
+                    const initial       = name.charAt(0).toUpperCase()
+
                     return (
                       <div key={event.id} className="flex items-start gap-2.5">
-                        {/* Agent avatar */}
-                        <div className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-                          isHuman
-                            ? 'bg-warning/20 text-warning'
-                            : 'bg-primary/20 text-primary'
-                        )}>
-                          {initial}
-                        </div>
+                        {/* Avatar — Bot icon for AI events, initials for human events */}
+                        {isAiEscalated ? (
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <Bot className="h-3.5 w-3.5" />
+                          </div>
+                        ) : (
+                          <div className={cn(
+                            'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                            isHuman             ? 'bg-warning/20 text-warning'     :
+                            isResolved          ? 'bg-muted/60 text-muted-foreground' :
+                            isReopened          ? 'bg-primary/20 text-primary'     :
+                                                  'bg-primary/20 text-primary'
+                          )}>
+                            {initial}
+                          </div>
+                        )}
+
                         <div className="flex-1 min-w-0">
                           <p className="text-xs leading-snug">
                             <span className="font-bold text-foreground">{name}</span>
                             <span className="text-muted-foreground/70">
-                              {isHuman ? ' took over' : ' returned to AI'}
+                              {isAiEscalated ? ' escalated to human' :
+                               isHuman       ? ' took over'          :
+                               isResolved    ? ' resolved'           :
+                               isReopened    ? ' reopened'           :
+                                               ' returned to AI'}
                             </span>
                           </p>
+                          {event.note && (
+                            <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-relaxed">{event.note}</p>
+                          )}
                           <p className="text-[10px] text-muted-foreground/40 mt-0.5 tabular-nums">
                             {formatDateTime(event.created_at)}
                           </p>

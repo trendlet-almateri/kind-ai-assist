@@ -18,6 +18,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { supabase } from '@/server/supabase/client'
 import type {
   Conversation, Message, TakeoverEvent, AgentProfile, ConvFilter,
@@ -48,7 +49,13 @@ export function useConversations(filter: ConvFilter, userId?: string) {
       if (filter === 'resolved') {
         q = q.eq('status', 'resolved')
       } else if (filter === 'needs_review') {
-        q = q.eq('had_human_intervention', true).neq('status', 'resolved')
+        // Queue = conversations actively waiting for a human:
+        //   needs_human_review = true  (AI escalated or keyword triggered)
+        //   OR is_ai_active = false AND assigned_agent IS NULL (human took over, unassigned)
+        // Exclude already-assigned and resolved conversations — they show in 'all'/'assigned_to_me'
+        q = q
+          .or('needs_human_review.eq.true,and(is_ai_active.eq.false,assigned_agent.is.null)')
+          .neq('status', 'resolved')
       } else {
         // all / open / assigned_to_me — exclude resolved
         q = q.neq('status', 'resolved')
@@ -61,13 +68,40 @@ export function useConversations(filter: ConvFilter, userId?: string) {
     staleTime: 10_000,
   })
 
-  // Realtime: invalidate on any conversation change
+  // Realtime: invalidate on any conversation change + fire toast on new escalations
   useEffect(() => {
     const channel = supabase
       .channel('conversations-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
-        qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] })
-      })
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'conversations' },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
+          const newRow = payload.new as Conversation
+          const oldRow = payload.old as Partial<Conversation>
+          // Fire toast when conversation newly enters the escalation queue
+          if (newRow.needs_human_review && !oldRow.needs_human_review) {
+            toast.warning(
+              `New escalation: ${newRow.customer_name ?? newRow.customer_phone ?? 'Unknown'}`,
+              {
+                description: newRow.escalation_reason ?? undefined,
+                duration: 8000,
+              }
+            )
+          }
+          qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'conversations' },
+        () => { qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] }) }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'conversations' },
+        () => { qc.invalidateQueries({ queryKey: ['inbox', 'conversations'] }) }
+      )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -340,5 +374,65 @@ export function useAgentsList() {
       return (data ?? []) as AgentProfile[]
     },
     staleTime: 30_000,
+  })
+}
+
+// ── Atomic "Assign to Me" ─────────────────────────────────────────────────────
+// Uses a conditional UPDATE (assigned_agent IS NULL) to prevent race conditions
+// when multiple agents try to claim the same conversation simultaneously.
+export function useAssignToMe() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, agentId }: { conversationId: string; agentId: string }) => {
+      const { data, error } = await supabase
+        .from('conversations')
+        .update({
+          assigned_agent: agentId,
+          status:         'assigned',
+          updated_at:     new Date().toISOString(),
+        })
+        .eq('id', conversationId)
+        .is('assigned_agent', null)   // Only claim if still unassigned (atomic guard)
+        .select('id')
+        .single()
+
+      if (error || !data) {
+        throw new Error('This conversation was just assigned to another agent')
+      }
+      return data
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inbox'] }) },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+// ── Human queue count (for sidebar badge) ────────────────────────────────────
+// Counts conversations with needs_human_review=true that are waiting for a human.
+// Realtime: re-fetches on any conversation change so the badge updates instantly.
+export function useQueueCount() {
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('queue-count-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
+        qc.invalidateQueries({ queryKey: ['inbox', 'queue-count'] })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [qc])
+
+  return useQuery({
+    queryKey: ['inbox', 'queue-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('conversations')
+        .select('id', { count: 'exact', head: true })
+        .eq('needs_human_review', true)
+        .is('deleted_at', null)
+      if (error) throw error
+      return count ?? 0
+    },
+    staleTime: 5_000,
   })
 }

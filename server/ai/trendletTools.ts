@@ -84,11 +84,16 @@ export const trendletToolDefs: OpenAI.Chat.ChatCompletionTool[] = [
       name: 'escalate_to_human',
       description:
         'Escalate the conversation to a human agent. ' +
-        'Call this when the customer explicitly asks to speak with a human, ' +
-        'says "أبي أكلم إنسان", "talk to agent", or "human support".',
+        'Call this when the customer explicitly requests a human, expresses frustration, ' +
+        'says "أبي أكلم إنسان", "talk to agent", "human support", or the issue requires human judgment.',
       parameters: {
         type: 'object',
-        properties: {},
+        properties: {
+          reason: {
+            type: 'string',
+            description: 'Brief reason shown to the human agent picking this up (e.g. "Customer requested human", "Complaint about damaged item", "Refund dispute").',
+          },
+        },
         required: [],
       },
     },
@@ -154,9 +159,18 @@ export const trendletResponsesToolDefs: any[] = [
     name: 'escalate_to_human',
     description:
       'Escalate the conversation to a human agent. ' +
-      'Call this when the customer explicitly asks to speak with a human, ' +
-      'says "أبي أكلم إنسان", "talk to agent", or "human support".',
-    parameters: { type: 'object', properties: {}, required: [] },
+      'Call this when the customer explicitly requests a human, expresses frustration, ' +
+      'says "أبي أكلم إنسان", "talk to agent", "human support", or the issue requires human judgment.',
+    parameters: {
+      type: 'object',
+      properties: {
+        reason: {
+          type: 'string',
+          description: 'Brief reason shown to the human agent picking this up (e.g. "Customer requested human", "Complaint about damaged item", "Refund dispute").',
+        },
+      },
+      required: [],
+    },
     strict: false,
   },
 ]

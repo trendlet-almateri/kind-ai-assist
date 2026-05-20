@@ -23,7 +23,8 @@ export type AgentStatus  = 'active' | 'suspended' | 'archived'
 export type ConvChannel  = 'web' | 'whatsapp'
 export type ConvStatus   = 'open' | 'assigned' | 'resolved' | 'closed'
 export type MessageRole  = 'user' | 'assistant' | 'agent' | 'system'
-export type TakeoverType = 'human_took_over' | 'ai_resumed' | 'conversation_resolved' | 'conversation_reopened'
+export type TakeoverType = 'human_took_over' | 'ai_resumed' | 'ai_escalated' | 'conversation_resolved' | 'conversation_reopened'
+export type AiPauseReason = 'escalation' | 'manual_takeover' | 'auto_return_disabled' | 'admin_disabled_ai'
 export type LLMProvider  = 'openai' | 'openrouter'
 export type KnowledgeStatus = 'uploading' | 'processing' | 'ready' | 'failed' | 'deleted'
 
@@ -68,6 +69,7 @@ export interface Conversation {
   agent_last_reply_at: string | null
   needs_human_review: boolean
   escalation_reason: string | null
+  ai_pause_reason: AiPauseReason | null
   resolved_at: string | null
   metadata: Record<string, Json>
   created_at: string
@@ -95,7 +97,7 @@ export interface TakeoverEvent {
   id: string
   workspace_id: string
   conversation_id: string        // FK → conversations.id
-  agent_id: string               // FK → agent_profiles.id
+  agent_id: string | null        // FK → agent_profiles.id (null for AI-initiated events)
   event_type: TakeoverType
   note: string | null
   created_at: string

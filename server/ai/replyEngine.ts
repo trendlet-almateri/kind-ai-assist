@@ -5,6 +5,7 @@
  * Flow for each inbound customer message:
  * 1. Fetch workspace settings (AI enabled? active system prompt? vector store?)
  * 2. If AI disabled or conversation assigned to human → skip
+ * 2b. Keyword escalation check (two-tier: hard bypass / soft hint)
  * 3. Build message history (last 10 messages for context)
  * 4. Call OpenAI Responses API with:
  *    - Active system prompt (+ order display rules injection)
@@ -31,6 +32,11 @@ import { getOpenAIClient } from './openai'
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import { trendletResponsesToolDefs, executeTrendletTool } from './trendletTools'
 
+/** Detect Arabic characters — used to choose label_ar vs label_en and for canned messages */
+function isArabic(text: string): boolean {
+  return /[؀-ۿ]/.test(text)
+}
+
 /**
  * A provider-agnostic "send a text reply to this customer" function.
  * Meta and Twilio inbound webhooks each pass their own implementation so
@@ -44,6 +50,70 @@ interface ReplyContext {
   customerName:   string | null
   workspaceId:    string
   send:           SendReplyFn
+}
+
+/**
+ * Shared escalation helper — called by AI-tool path, keyword path, and any future path.
+ * Sets conversation flags, inserts system message, logs event, sends farewell to customer.
+ */
+async function doEscalation(
+  db:           ReturnType<typeof getSupabaseAdminClient>,
+  ctx:          Pick<ReplyContext, 'conversationId' | 'workspaceId' | 'customerPhone' | 'send'>,
+  reason:       string,
+  farewell:     string,
+  model:        string
+): Promise<void> {
+  // 1. Flag conversation for human queue — stays 'open' (unassigned, NOT 'assigned')
+  await db.from('conversations').update({
+    is_ai_active:       false,
+    needs_human_review: true,
+    escalation_reason:  reason,
+    ai_pause_reason:    'escalation',
+    status:             'open',
+    assigned_agent:     null,
+    updated_at:         new Date().toISOString(),
+  }).eq('id', ctx.conversationId)
+
+  // 2. System message visible in chat (ChatWindow styles this amber)
+  await db.from('messages').insert({
+    conversation_id: ctx.conversationId,
+    workspace_id:    ctx.workspaceId,
+    role:            'system',
+    content:         `Escalated to human support — ${reason}`,
+    sender_name:     'System',
+    is_read:         true,
+    metadata:        {},
+  })
+
+  // 3. Event log — 'ai_escalated' type (semantically distinct from human_took_over)
+  //    agent_id is null — AI-initiated, no human assigned yet
+  await db.from('takeover_events').insert({
+    workspace_id:    ctx.workspaceId,
+    conversation_id: ctx.conversationId,
+    agent_id:        null,
+    event_type:      'ai_escalated',
+    note:            reason,
+  }).catch(e => console.error('[replyEngine] takeover_event insert failed (non-fatal):', e instanceof Error ? e.message : String(e)))
+
+  // 4. Save farewell message to DB
+  await db.from('messages').insert({
+    conversation_id: ctx.conversationId,
+    workspace_id:    ctx.workspaceId,
+    role:            'assistant',
+    content:         farewell,
+    sender_name:     'SupportAI',
+    model_used:      model,
+    tokens_used:     null,
+    is_read:         false,
+    metadata:        {},
+  })
+
+  // 5. Send to customer — fail-safe: catch + log, never throw
+  try {
+    await ctx.send(ctx.customerPhone, farewell)
+  } catch (sendErr) {
+    console.error('[replyEngine] Farewell send failed (escalation):', sendErr instanceof Error ? sendErr.message : String(sendErr))
+  }
 }
 
 export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
@@ -77,11 +147,28 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
 
   const messages = (history ?? []).reverse()
 
-  // ── 4. Build OpenAI messages ──────────────────────────────────────────────
-
-  // Detect language from the latest customer message so we know which label field to use
+  // ── 2b. Keyword escalation check (runs before OpenAI to save tokens) ──────
   const latestUserContent = messages.filter((m) => m.role === 'user').at(-1)?.content ?? ''
   const useArabic = isArabic(latestUserContent)
+  const lowerContent = latestUserContent.toLowerCase()
+
+  const CANNED_FAREWELL = useArabic
+    ? 'جاري تحويلك إلى أحد أعضاء فريق الدعم. سيتواصل معك قريباً.'
+    : "I'm connecting you with a human support agent. They'll be with you shortly."
+
+  // Hard keywords — bypass AI entirely, immediate escalation (sensitive topics)
+  const HARD_KEYWORDS = ['lawsuit', 'police', 'lawyer', 'threat', 'abuse']
+  if (settings.escalation_enabled) {
+    const hardHit = HARD_KEYWORDS.find(kw => lowerContent.includes(kw))
+    if (hardHit) {
+      const reason = `Sensitive topic detected: "${hardHit}"`
+      await doEscalation(db, ctx, reason, CANNED_FAREWELL, prompt?.model ?? 'gpt-4o')
+      console.log(`[replyEngine] Hard keyword escalation — "${hardHit}" in conv ${ctx.conversationId}`)
+      return
+    }
+  }
+
+  // ── 4. Build OpenAI messages ──────────────────────────────────────────────
 
   // Inject order display rules so the AI presents live order data correctly
   const orderRules =
@@ -92,9 +179,21 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     'Use statusChangedAt for "as of <date>". ' +
     'If a field is null, say it is not yet available — never invent data.'
 
-  const systemContent =
+  let systemContent =
     (prompt?.content ?? 'You are a helpful customer support agent. Be concise, professional, and empathetic.') +
     orderRules
+
+  // Soft keywords — inject hint into system prompt; AI decides whether to escalate
+  if (settings.escalation_enabled && settings.escalation_keywords?.length > 0) {
+    const softHit = settings.escalation_keywords.find((kw: string) =>
+      lowerContent.includes(kw.toLowerCase())
+    )
+    if (softHit) {
+      systemContent +=
+        `\n\n[HINT: The customer's message contains the word "${softHit}". ` +
+        'Consider whether escalating to a human agent is appropriate for this situation.]'
+    }
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inputMessages: any[] = [
@@ -125,7 +224,7 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     // Turn 1 — OpenAI handles file_search internally; function_call items need manual execution
     const resp1 = await responsesApi.create({
       model,
-      input:            inputMessages,
+      input:             inputMessages,
       tools,
       temperature,
       max_output_tokens: 800,
@@ -134,14 +233,22 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const functionCalls: any[] = (resp1.output ?? []).filter((item: any) => item.type === 'function_call')
 
-    // Escalation check — hand off to human and stop
+    // ── Escalation via AI tool (escalate_to_human) ────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (functionCalls.some((fc: any) => fc.name === 'escalate_to_human')) {
-      await db.from('conversations').update({ is_ai_active: false }).eq('id', ctx.conversationId)
-      console.log(`[replyEngine] Escalated to human — conversation ${ctx.conversationId}`)
+    const escalateCall = functionCalls.find((fc: any) => fc.name === 'escalate_to_human')
+    if (escalateCall) {
+      const escalateArgs = JSON.parse(escalateCall.arguments ?? '{}') as { reason?: string }
+      const reason = escalateArgs.reason?.trim() || 'AI determined human assistance is needed'
+
+      // Use AI's own output_text as farewell if it wrote one (better than canned message)
+      const farewell = resp1.output_text?.trim() || CANNED_FAREWELL
+
+      await doEscalation(db, ctx, reason, farewell, model)
+      console.log(`[replyEngine] ai_escalated — ${ctx.conversationId} — reason: ${reason}`)
       return
     }
 
+    // ── Trendlet order/tracking tool calls ───────────────────────────────
     if (functionCalls.length > 0) {
       // Execute Trendlet tool calls in parallel
       const toolOutputs = await Promise.all(
@@ -157,7 +264,7 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
       // Turn 2 — append tool outputs and get final reply
       const resp2 = await responsesApi.create({
         model,
-        input:            [...inputMessages, ...(resp1.output ?? []), ...toolOutputs],
+        input:             [...inputMessages, ...(resp1.output ?? []), ...toolOutputs],
         tools,
         temperature,
         max_output_tokens: 800,
@@ -198,13 +305,4 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
     return
   }
   await ctx.send(ctx.customerPhone, replyText)
-
-  // ── 8. Check escalation keywords ──────────────────────────────────────────
-  // The Postgres trigger handles this automatically on message insert,
-  // but we double-check here for immediate handling if needed.
-}
-
-/** Detect Arabic characters — used to choose label_ar vs label_en in order status */
-function isArabic(text: string): boolean {
-  return /[؀-ۿ]/.test(text)
 }

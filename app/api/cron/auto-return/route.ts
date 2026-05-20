@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
     .eq('workspace_id', settings.workspace_id)
     .eq('is_ai_active', false)
     .eq('status', 'assigned')
+    .eq('needs_human_review', false)   // NEVER auto-return escalated conversations
     .is('deleted_at', null)
     .lt('agent_last_reply_at', cutoff)
     .not('agent_last_reply_at', 'is', null)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck, ShieldCheck } from 'lucide-react'
+import { Send, Bot, Cpu, Loader2, MessageSquare, Zap, CheckCheck, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, getDateLabel, formatTime } from '@/lib/utils'
 import type { Message } from '@/types/database'
@@ -126,11 +126,26 @@ export function ChatWindow({ messages, isLoading, isAiActive, aiEnabled, isResol
               <div className="space-y-2.5">
                 {group.messages.map((msg) => {
                   if (msg.role === 'system') {
+                    // Escalation messages get amber styling; normal system messages get muted
+                    const isEscalation = msg.content.startsWith('Escalated to human')
                     return (
                       <div key={msg.id} className="flex justify-center my-3">
-                        <div className="flex items-center gap-2 rounded-full bg-muted/50 border border-border/40 px-3 py-1.5">
-                          <Cpu className="h-3 w-3 text-muted-foreground/60" />
-                          <span className="text-[11px] text-muted-foreground italic">{msg.content}</span>
+                        <div className={cn(
+                          'flex items-center gap-2 rounded-full border px-3 py-1.5 max-w-[85%]',
+                          isEscalation
+                            ? 'bg-amber-50 border-amber-200 text-amber-700'
+                            : 'bg-muted/50 border-border/40 text-muted-foreground'
+                        )}>
+                          {isEscalation
+                            ? <AlertTriangle className="h-3 w-3 shrink-0" />
+                            : <Cpu className="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                          }
+                          <span className={cn(
+                            'text-[11px] italic truncate',
+                            isEscalation ? 'text-amber-700' : 'text-muted-foreground'
+                          )}>
+                            {msg.content}
+                          </span>
                         </div>
                       </div>
                     )

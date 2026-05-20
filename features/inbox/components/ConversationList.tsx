@@ -2,15 +2,29 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn, timeAgo, getInitial, getAvatarColor } from '@/lib/utils'
-import { Search, Bot, User, SlidersHorizontal, Check, MessageCircle, CheckCheck } from 'lucide-react'
+import { Search, Bot, User, SlidersHorizontal, Check, MessageCircle, CheckCheck, AlertTriangle } from 'lucide-react'
 import type { Conversation } from '@/types/database'
 import type { ConvFilter } from '@/types'
 
 const FILTER_TABS: { key: ConvFilter; label: string }[] = [
   { key: 'all',          label: 'All'      },
-  { key: 'needs_review', label: 'Review'   },
+  { key: 'needs_review', label: 'Queue'    },
   { key: 'resolved',     label: 'Resolved' },
 ]
+
+/** Returns urgency level based on how long a conversation has been waiting */
+function urgencyLevel(updatedAt: string): 'amber' | 'orange' | 'red' {
+  const mins = (Date.now() - new Date(updatedAt).getTime()) / 60_000
+  if (mins > 30) return 'red'
+  if (mins > 15) return 'orange'
+  return 'amber'
+}
+
+const URGENCY_STYLES = {
+  amber:  { badge: 'text-amber-600 bg-amber-50 border-amber-200',   text: 'text-amber-600'  },
+  orange: { badge: 'text-orange-600 bg-orange-50 border-orange-200', text: 'text-orange-600' },
+  red:    { badge: 'text-red-600 bg-red-50 border-red-200',          text: 'text-red-600'    },
+}
 
 const HANDLING_OPTIONS = [
   { value: 'ai',    label: 'AI' },
@@ -106,13 +120,18 @@ export function ConversationList({
               key={tab.key}
               onClick={() => onFilterChange(tab.key)}
               className={cn(
-                'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150',
+                'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 relative',
                 filter === tab.key
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               )}
             >
               {tab.label}
+              {tab.key === 'needs_review' && unreadCount > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold px-1">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -193,11 +212,14 @@ export function ConversationList({
         ) : (
           <div className="px-3 py-2 space-y-0.5">
             {displayed.map((conv) => {
-              const isSelected  = conv.id === selectedId
-              const last        = lastMessages[conv.id]
-              const avatarColor = getAvatarColor(conv.id)
-              const initial     = getInitial(conv.customer_name, conv.customer_phone)
-              const isResolved  = conv.status === 'resolved'
+              const isSelected   = conv.id === selectedId
+              const last         = lastMessages[conv.id]
+              const avatarColor  = getAvatarColor(conv.id)
+              const initial      = getInitial(conv.customer_name, conv.customer_phone)
+              const isResolved   = conv.status === 'resolved'
+              const isEscalated  = conv.needs_human_review && !isResolved
+              const urgency      = isEscalated ? urgencyLevel(conv.updated_at) : 'amber'
+              const urgencyStyle = URGENCY_STYLES[urgency]
 
               return (
                 <button
@@ -221,10 +243,17 @@ export function ConversationList({
                       )}>
                         {initial}
                       </div>
-                      {/* Resolved badge overrides AI/Human badge */}
+                      {/* Resolved > Escalated > AI/Human badge */}
                       {isResolved ? (
                         <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar bg-muted shadow-sm">
                           <CheckCheck className="h-2.5 w-2.5 text-muted-foreground" />
+                        </span>
+                      ) : isEscalated ? (
+                        <span className={cn(
+                          'absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-sidebar shadow-sm',
+                          urgency === 'red' ? 'bg-red-500 animate-pulse' : urgency === 'orange' ? 'bg-orange-500' : 'bg-amber-500'
+                        )}>
+                          <AlertTriangle className="h-2.5 w-2.5 text-white" />
                         </span>
                       ) : (
                         <span className={cn(
@@ -249,18 +278,28 @@ export function ConversationList({
                         )}>
                           {conv.customer_name ?? conv.customer_phone ?? 'Unknown'}
                         </span>
-                        <span className="shrink-0 text-[11px] text-muted-foreground/40 leading-none font-medium">
+                        <span className={cn(
+                          'shrink-0 text-[11px] leading-none font-medium',
+                          isEscalated ? urgencyStyle.text : 'text-muted-foreground/40'
+                        )}>
                           {isResolved && conv.resolved_at
                             ? timeAgo(conv.resolved_at)
                             : timeAgo(conv.updated_at)}
                         </span>
                       </div>
 
-                      {/* Resolved label OR sender icon + message preview */}
+                      {/* Resolved > Escalated > normal message preview */}
                       {isResolved ? (
                         <div className="flex items-center gap-1.5">
                           <CheckCheck className="h-3 w-3 shrink-0 text-muted-foreground/30" />
                           <p className="text-xs text-muted-foreground/40 italic">Resolved</p>
+                        </div>
+                      ) : isEscalated ? (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <AlertTriangle className={cn('h-3 w-3 shrink-0', urgencyStyle.text)} />
+                          <p className={cn('truncate text-xs font-medium', urgencyStyle.text)}>
+                            {conv.escalation_reason ?? 'Waiting for human agent'}
+                          </p>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 min-w-0">
