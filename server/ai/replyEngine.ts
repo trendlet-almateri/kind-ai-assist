@@ -132,44 +132,33 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
 
   if (!settings?.ai_enabled) return
 
-  // ── 2. Check if conversation is AI-active ─────────────────────────────────
+  // ── 2. Check if conversation is AI-active + fetch session boundary ───────────
+  // session_started_at is the single source of truth for session isolation.
+  // It is set to now() on every genuine reopen (Twilio automatic + agent UI).
+  // It is NOT reset on auto-return or agent takeover (same live session continues).
   const { data: conv } = await db
     .from('conversations')
-    .select('is_ai_active, assigned_agent, status')
+    .select('is_ai_active, assigned_agent, status, session_started_at, conversation_summary_ai')
     .eq('id', ctx.conversationId)
     .single()
 
   if (!conv?.is_ai_active) return // Human has taken over
 
-  // ── 3. Fetch recent message history (current session only) ──────────────────
-  // When a resolved conversation is reopened, we only feed messages from the
-  // current session to the AI. Otherwise the AI reads old "ابي انسان" messages
-  // and incorrectly escalates a simple greeting like "السلام عليكم".
-  const { data: lastReopenEvent } = await db
-    .from('takeover_events')
-    .select('created_at')
-    .eq('conversation_id', ctx.conversationId)
-    .eq('event_type', 'conversation_reopened')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  // ── 3. Fetch current-session messages only ────────────────────────────────
+  // Only messages AFTER session_started_at are visible to the AI.
+  // This guarantees old "ابي انسان" from previous sessions can never
+  // leak into the current session context, preventing escalation loops.
+  const sessionStartedAt = conv.session_started_at
 
-  const sessionStartedAt = lastReopenEvent?.created_at ?? null
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let historyQuery: any = db
+  const { data: history } = await db
     .from('messages')
     .select('role, content')
     .eq('conversation_id', ctx.conversationId)
-    .order('created_at', { ascending: false })
-    .limit(10)
+    .gte('created_at', sessionStartedAt)
+    .order('created_at', { ascending: true })
+    .limit(30)
 
-  if (sessionStartedAt) {
-    historyQuery = historyQuery.gte('created_at', sessionStartedAt)
-  }
-
-  const { data: history } = await historyQuery
-  const messages = ((history ?? []) as { role: string; content: string }[]).reverse()
+  const messages = (history ?? []) as { role: string; content: string }[]
 
   // ── 2b. Keyword escalation check (runs before OpenAI to save tokens) ──────
   const latestUserContent = messages.filter((m) => m.role === 'user').at(-1)?.content ?? ''
@@ -228,6 +217,15 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inputMessages: any[] = [
     { role: 'system', content: systemContent },
+
+    // Cross-session memory: AI-safe summary from previous sessions.
+    // Contains only sanitized facts (preferences, resolved issues) — no escalation content.
+    // conversation_summary_internal is NEVER injected here.
+    ...(conv.conversation_summary_ai
+      ? [{ role: 'system', content: `Previous customer context:\n${conv.conversation_summary_ai}` }]
+      : []),
+
+    // Current session messages only (system + agent roles excluded).
     ...messages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),

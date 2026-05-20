@@ -20,6 +20,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useCallback, useId } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/server/supabase/client'
+import { buildReopenPayload } from '@/lib/conversation'
 import type {
   Conversation, Message, TakeoverEvent, AgentProfile, ConvFilter,
 } from '@/types'
@@ -336,10 +337,10 @@ export function useResolveConversation() {
     }) => {
       const now = new Date().toISOString()
 
+      // buildReopenPayload() resets ALL escalation state + session_started_at = now()
+      // so the AI receives a clean session. Identical fields to the Twilio reopen path.
       const conversationUpdates = reopen
-        ? { status: 'open' as const, is_ai_active: true, assigned_agent: null,
-            resolved_at: null, needs_human_review: false, escalation_reason: null,
-            ai_pause_reason: null, updated_at: now }
+        ? buildReopenPayload()
         : { status: 'resolved' as const, resolved_at: now, needs_human_review: false,
             escalation_reason: null, updated_at: now }
 
@@ -359,7 +360,13 @@ export function useResolveConversation() {
         })
       if (evtErr) throw evtErr
     },
-    onSuccess: () => {
+    onSuccess: (_data, { conversationId, reopen }) => {
+      if (!reopen) {
+        // Fire-and-forget — generate summaries after resolve.
+        // Failure is non-fatal: conversation is already resolved, next session works without summary.
+        fetch(`/api/conversations/${conversationId}/summarize`, { method: 'POST' })
+          .catch(() => {})
+      }
       qc.invalidateQueries({ queryKey: ['inbox'] })
     },
   })

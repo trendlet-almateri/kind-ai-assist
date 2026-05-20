@@ -71,6 +71,9 @@ export interface Conversation {
   escalation_reason: string | null
   ai_pause_reason: AiPauseReason | null
   resolved_at: string | null
+  session_started_at: string              // source of truth for AI session boundary
+  conversation_summary_ai: string | null  // injected into OpenAI context, sanitized
+  conversation_summary_internal: string | null  // agents/admins only, never sent to OpenAI
   metadata: Record<string, Json>
   created_at: string
   updated_at: string

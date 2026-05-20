@@ -38,6 +38,7 @@ import {
   sendTwilioWhatsAppMessage,
   verifyTwilioSignature,
 } from '@/server/whatsapp/twilio-client'
+import { buildReopenPayload } from '@/lib/conversation'
 
 function stripWhatsAppPrefix(addr: string): string {
   return addr.startsWith('whatsapp:') ? addr.slice('whatsapp:'.length) : addr
@@ -156,22 +157,20 @@ async function processInbound(opts: {
     conversationId = existingConv.id
     workspaceId = existingConv.workspace_id
 
-    // Reopen resolved conversations automatically when customer messages again
+    // Reopen resolved conversations automatically when customer messages again.
+    // buildReopenPayload() clears ALL escalation state and resets session_started_at
+    // so the AI receives a clean session — identical fields to the agent UI reopen path.
     if (existingConv.status === 'resolved') {
-      const { error: reopenErr } = await db.from('conversations').update({
-        status: 'open',
-        is_ai_active: true,
-        assigned_agent: null,
-        resolved_at: null,
-        updated_at: new Date().toISOString(),
-      }).eq('id', conversationId)
+      const { error: reopenErr } = await db
+        .from('conversations')
+        .update(buildReopenPayload())
+        .eq('id', conversationId)
 
       if (reopenErr) {
         console.error('[Twilio Webhook] step1 reopen-resolved failed:', reopenErr)
       } else {
         console.log('[Twilio Webhook] step1 reopened resolved conversation', { conversationId })
       }
-      // No takeover_event inserted here — no real agent actor (Twilio-triggered)
     }
 
     if (!existingConv.customer_name && profileName) {
