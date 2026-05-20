@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Save, Plus, Trash2, Bot, Clock, Shield,
-  Sparkles, Zap, ZapOff, Loader2, ChevronDown, Pencil,
+  Sparkles, Zap, ZapOff, Loader2, ChevronDown, Pencil, Play,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -13,6 +13,7 @@ import {
   saveWorkspaceSettingsAction,
   saveSystemPromptAction,
   deleteSystemPromptAction,
+  triggerAutoReturnAction,
 } from '@/features/settings/actions'
 import type { WorkspaceSettings, SystemPrompt } from '@/types'
 
@@ -72,6 +73,7 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
   const [escalationOn,   setEscalationOn]   = useState(settings?.escalation_enabled      ?? true)
   const [showDisableConfirm, setShowDisableConfirm] = useState(false)
   const [savingSettings,     setSavingSettings]     = useState(false)
+  const [runningAutoReturn,  setRunningAutoReturn]  = useState(false)
 
   // ── Prompt editor state ───────────────────────────────────────────────────
   // null = empty state (nothing selected), prompt = editing existing, BLANK = new
@@ -100,6 +102,20 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
     setSavingSettings(false)
     if (result.error) toast.error(result.error)
     else { toast.success('Settings saved'); router.refresh() }
+  }
+
+  // ── Manually trigger auto-return ─────────────────────────────────────────
+  const handleRunAutoReturn = async () => {
+    setRunningAutoReturn(true)
+    const result = await triggerAutoReturnAction()
+    setRunningAutoReturn(false)
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      const n = result.data?.returned ?? 0
+      const msg = result.data?.skipped ?? `Returned ${n} conversation${n !== 1 ? 's' : ''} to AI`
+      n > 0 ? toast.success(msg) : toast.info(msg)
+    }
   }
 
   // ── Delete prompt ─────────────────────────────────────────────────────────
@@ -161,9 +177,9 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
                 </div>
                 <Toggle checked={autoReturn} onChange={setAutoReturn} />
               </div>
-              {/* Minutes input — only visible when enabled */}
+              {/* Minutes input + Run Now — only visible when enabled */}
               {autoReturn && (
-                <div className="flex items-center gap-3 pl-12">
+                <div className="flex items-center gap-3 pl-12 flex-wrap">
                   <p className="text-xs text-muted-foreground">Return after</p>
                   <input
                     type="number"
@@ -174,6 +190,18 @@ export function SettingsShell({ settings, prompts: initialPrompts }: Props) {
                     className="w-16 rounded-lg border border-border/60 bg-input px-2 py-1 text-center text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary/40"
                   />
                   <p className="text-xs text-muted-foreground">minutes of agent inactivity</p>
+                  <button
+                    type="button"
+                    onClick={handleRunAutoReturn}
+                    disabled={runningAutoReturn}
+                    className="flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+                    title="Run auto-return now (useful on Vercel Hobby where cron runs once/day)"
+                  >
+                    {runningAutoReturn
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <Play className="h-3 w-3" />}
+                    Run Now
+                  </button>
                 </div>
               )}
             </div>

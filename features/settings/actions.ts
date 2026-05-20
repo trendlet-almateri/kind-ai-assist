@@ -5,6 +5,72 @@ import { getServerSession } from '@/server/supabase/server'
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import type { ActionState, WorkspaceSettings, SystemPrompt } from '@/types'
 
+// ── Manually trigger auto-return (admin only) ─────────────────────────────────
+// Same logic as the cron but callable from the Settings UI.
+// Useful on Vercel Hobby where crons only fire once per day.
+export async function triggerAutoReturnAction(): Promise<ActionState<{ returned: number; skipped?: string }>> {
+  const session = await getServerSession()
+  if (!session || session.profile.role !== 'admin') {
+    return { error: 'Admin access required' }
+  }
+
+  const db = getSupabaseAdminClient()
+
+  const { data: settings } = await db
+    .from('workspace_settings')
+    .select('workspace_id, ai_enabled, auto_return_enabled, auto_return_ai_minutes')
+    .limit(1)
+    .single()
+
+  if (!settings) return { error: 'Could not read workspace settings' }
+  if (!settings.ai_enabled) return { error: 'Bot Auto-Reply is disabled — enable it first' }
+  if (!settings.auto_return_enabled) return { error: 'Auto-Return to AI is disabled — enable it first' }
+
+  const minutes = settings.auto_return_ai_minutes ?? 5
+  const cutoff  = new Date(Date.now() - minutes * 60 * 1000).toISOString()
+
+  const { data: conversations, error: convErr } = await db
+    .from('conversations')
+    .select('id, assigned_agent, workspace_id')
+    .eq('workspace_id', settings.workspace_id)
+    .eq('is_ai_active', false)
+    .eq('status', 'assigned')
+    .eq('needs_human_review', false)
+    .is('deleted_at', null)
+    .lt('agent_last_reply_at', cutoff)
+    .not('agent_last_reply_at', 'is', null)
+
+  if (convErr) return { error: convErr.message }
+  if (!conversations || conversations.length === 0) {
+    return { data: { returned: 0, skipped: `No conversations idle for ${minutes}+ minutes` } }
+  }
+
+  const now = new Date().toISOString()
+  const ids  = conversations.map((c) => c.id)
+
+  await db.from('conversations').update({
+    is_ai_active: true, status: 'open', assigned_agent: null,
+    agent_last_reply_at: null, updated_at: now,
+  }).in('id', ids)
+
+  await db.from('messages').insert(ids.map((id) => ({
+    workspace_id: settings.workspace_id, conversation_id: id,
+    role: 'system' as const,
+    content: `AI resumed — agent was inactive for ${minutes} minutes`,
+    sender_name: 'System', is_read: true, metadata: {},
+  })))
+
+  const events = conversations.filter((c) => c.assigned_agent).map((c) => ({
+    workspace_id: settings.workspace_id, conversation_id: c.id,
+    agent_id: c.assigned_agent as string, event_type: 'ai_resumed' as const,
+    note: `Manually triggered — inactive for ${minutes}+ minutes`,
+  }))
+  if (events.length > 0) await db.from('takeover_events').insert(events)
+
+  revalidatePath('/settings')
+  return { data: { returned: ids.length } }
+}
+
 // ── Save workspace settings ───────────────────────────────────────────────────
 export async function saveWorkspaceSettingsAction(
   _prev: ActionState,
