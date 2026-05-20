@@ -127,11 +127,6 @@ export function ConversationList({
               )}
             >
               {tab.label}
-              {tab.key === 'needs_review' && unreadCount > 0 && (
-                <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold px-1">
-                  {unreadCount}
-                </span>
-              )}
             </button>
           ))}
         </div>
