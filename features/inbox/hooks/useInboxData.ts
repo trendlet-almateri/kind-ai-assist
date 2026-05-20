@@ -17,7 +17,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useId } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/server/supabase/client'
 import type {
@@ -35,6 +35,7 @@ const KEYS = {
 
 // ── Conversations list ────────────────────────────────────────────────────────
 export function useConversations(filter: ConvFilter, userId?: string) {
+  const id = useId()
   const qc = useQueryClient()
 
   const query = useQuery({
@@ -71,7 +72,7 @@ export function useConversations(filter: ConvFilter, userId?: string) {
   // Realtime: invalidate on any conversation change + fire toast on new escalations
   useEffect(() => {
     const channel = supabase
-      .channel('conversations-realtime')
+      .channel(`conversations-${id}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'conversations' },
@@ -105,13 +106,14 @@ export function useConversations(filter: ConvFilter, userId?: string) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [qc])
+  }, [id, qc])
 
   return query
 }
 
 // ── Last message preview per conversation ─────────────────────────────────────
 export function useLastMessages(conversationIds: string[]) {
+  const id = useId()
   const qc = useQueryClient()
 
   const query = useQuery({
@@ -139,16 +141,18 @@ export function useLastMessages(conversationIds: string[]) {
     staleTime: 10_000,
   })
 
+  // dep array omits conversationIds — channel subscribes globally to all message inserts,
+  // recreating it on every conversation list change would cause brief subscription gaps
   useEffect(() => {
-    if (!conversationIds.length) return
     const channel = supabase
-      .channel('last-messages-realtime')
+      .channel(`last-messages-${id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
         qc.invalidateQueries({ queryKey: ['inbox', 'last-messages'] })
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [conversationIds, qc])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, qc])
 
   return query
 }
@@ -363,6 +367,20 @@ export function useResolveConversation() {
 
 // ── Agents list (for reassignment) ────────────────────────────────────────────
 export function useAgentsList() {
+  const id = useId()
+  const qc = useQueryClient()
+
+  // Realtime: update agent list when online status or profile changes
+  useEffect(() => {
+    const channel = supabase
+      .channel(`agents-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'agent_profiles' }, () => {
+        qc.invalidateQueries({ queryKey: KEYS.agents() })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [id, qc])
+
   return useQuery({
     queryKey: KEYS.agents(),
     queryFn: async () => {
@@ -411,17 +429,18 @@ export function useAssignToMe() {
 // Counts conversations with needs_human_review=true that are waiting for a human.
 // Realtime: re-fetches on any conversation change so the badge updates instantly.
 export function useQueueCount() {
+  const id = useId()
   const qc = useQueryClient()
 
   useEffect(() => {
     const channel = supabase
-      .channel('queue-count-realtime')
+      .channel(`queue-count-${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
         qc.invalidateQueries({ queryKey: ['inbox', 'queue-count'] })
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [qc])
+  }, [id, qc])
 
   return useQuery({
     queryKey: ['inbox', 'queue-count'],
