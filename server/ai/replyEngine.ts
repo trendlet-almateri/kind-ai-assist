@@ -141,15 +141,35 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
 
   if (!conv?.is_ai_active) return // Human has taken over
 
-  // ── 3. Fetch recent message history ───────────────────────────────────────
-  const { data: history } = await db
+  // ── 3. Fetch recent message history (current session only) ──────────────────
+  // When a resolved conversation is reopened, we only feed messages from the
+  // current session to the AI. Otherwise the AI reads old "ابي انسان" messages
+  // and incorrectly escalates a simple greeting like "السلام عليكم".
+  const { data: lastReopenEvent } = await db
+    .from('takeover_events')
+    .select('created_at')
+    .eq('conversation_id', ctx.conversationId)
+    .eq('event_type', 'conversation_reopened')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const sessionStartedAt = lastReopenEvent?.created_at ?? null
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let historyQuery: any = db
     .from('messages')
     .select('role, content')
     .eq('conversation_id', ctx.conversationId)
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const messages = (history ?? []).reverse()
+  if (sessionStartedAt) {
+    historyQuery = historyQuery.gte('created_at', sessionStartedAt)
+  }
+
+  const { data: history } = await historyQuery
+  const messages = ((history ?? []) as { role: string; content: string }[]).reverse()
 
   // ── 2b. Keyword escalation check (runs before OpenAI to save tokens) ──────
   const latestUserContent = messages.filter((m) => m.role === 'user').at(-1)?.content ?? ''

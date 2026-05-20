@@ -334,7 +334,8 @@ export function useResolveConversation() {
 
       const conversationUpdates = reopen
         ? { status: 'open' as const, is_ai_active: true, assigned_agent: null,
-            resolved_at: null, updated_at: now }
+            resolved_at: null, needs_human_review: false, escalation_reason: null,
+            ai_pause_reason: null, updated_at: now }
         : { status: 'resolved' as const, resolved_at: now, needs_human_review: false,
             escalation_reason: null, updated_at: now }
 
