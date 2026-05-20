@@ -92,11 +92,6 @@ export function ConversationList({
             {displayed.length}
           </span>
         )}
-        {!isLoading && unreadCount > 0 && (
-          <span className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-destructive/90 px-1.5 text-[11px] font-bold leading-none text-white tabular-nums">
-            {unreadCount}
-          </span>
-        )}
       </div>
 
       {/* ── Search ───────────────────────────────────────────── */}
