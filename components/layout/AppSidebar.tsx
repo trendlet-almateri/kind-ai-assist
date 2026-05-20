@@ -23,7 +23,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logoutAction } from '@/features/auth/actions'
-import { useQueueCount } from '@/features/inbox/hooks/useInboxData'
 import type { AgentProfile } from '@/types/database'
 
 interface NavItem {
@@ -54,7 +53,6 @@ interface AppSidebarProps {
 export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname    = usePathname()
-  const { data: queueCount = 0 } = useQueueCount()
 
   const filteredNav = NAV_ITEMS.filter(
     (item) => !item.adminOnly || profile.role === 'admin'
@@ -114,9 +112,7 @@ export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSid
       {/* ── Navigation ─────────────────────────────────────────────── */}
       <nav className="flex-1 space-y-1 px-3 pt-4 overflow-y-auto">
         {filteredNav.map((item) => {
-          const isActive    = pathname === item.href
-          const isInboxItem = item.href === '/inbox'
-          const showBadge   = isInboxItem && queueCount > 0
+          const isActive = pathname === item.href
           return (
             <Link
               key={item.href}
@@ -131,14 +127,6 @@ export function AppSidebar({ profile, aiEnabled, collapsed, onCollapse }: AppSid
             >
               <item.icon className="h-4 w-4 shrink-0" />
               {!collapsed && <span className="flex-1">{item.label}</span>}
-              {showBadge && (
-                <span className={cn(
-                  'flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-amber-500 text-white text-[9px] font-bold px-1',
-                  collapsed && 'absolute top-1 right-1 min-w-[14px] h-[14px] text-[8px]'
-                )}>
-                  {queueCount > 99 ? '99+' : queueCount}
-                </span>
-              )}
             </Link>
           )
         })}
