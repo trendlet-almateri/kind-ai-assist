@@ -23,7 +23,7 @@ function getOpenAI() {
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Auth check — must be a logged-in agent/admin
   const session = await getServerSession()
@@ -31,7 +31,7 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const conversationId = params.id
+  const { id: conversationId } = await params
   const db = getSupabaseAdminClient()
 
   // Fetch all messages for this conversation
