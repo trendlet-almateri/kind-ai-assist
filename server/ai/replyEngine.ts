@@ -86,14 +86,18 @@ async function doEscalation(
   })
 
   // 3. Event log — 'ai_escalated' type (semantically distinct from human_took_over)
-  //    agent_id is null — AI-initiated, no human assigned yet
-  await db.from('takeover_events').insert({
-    workspace_id:    ctx.workspaceId,
-    conversation_id: ctx.conversationId,
-    agent_id:        null,
-    event_type:      'ai_escalated',
-    note:            reason,
-  }).catch(e => console.error('[replyEngine] takeover_event insert failed (non-fatal):', e instanceof Error ? e.message : String(e)))
+  //    agent_id is null — AI-initiated, no human assigned yet (non-fatal)
+  try {
+    await db.from('takeover_events').insert({
+      workspace_id:    ctx.workspaceId,
+      conversation_id: ctx.conversationId,
+      agent_id:        null,
+      event_type:      'ai_escalated',
+      note:            reason,
+    })
+  } catch (e) {
+    console.error('[replyEngine] takeover_event insert failed (non-fatal):', e instanceof Error ? e.message : String(e))
+  }
 
   // 4. Save farewell message to DB
   await db.from('messages').insert({
