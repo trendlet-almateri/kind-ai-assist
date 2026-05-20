@@ -194,9 +194,15 @@ export async function generateAndSendReply(ctx: ReplyContext): Promise<void> {
 
   // ── 4. Build OpenAI messages ──────────────────────────────────────────────
 
-  // Inject order display rules so the AI presents live order data correctly
+  // Inject order display rules + CRITICAL tool routing instructions
   const orderRules =
-    `\n\nWhen presenting order status, use the ${useArabic ? 'label_ar' : 'label_en'} field. ` +
+    '\n\n## CRITICAL — Order Lookup Rules (MUST follow exactly):\n' +
+    '- When the customer provides an ORDER NUMBER → you MUST call getOrderDetails(orderNumber). NEVER use file_search for this.\n' +
+    '- When the customer provides an EMAIL → you MUST call searchOrdersByEmail(email). NEVER use file_search for this.\n' +
+    '- When the customer asks about SHIPPING or TRACKING → you MUST call getShipmentTracking(orderNumber). NEVER use file_search for this.\n' +
+    '- file_search is ONLY for general questions about brand info, policies, and FAQs — NEVER for specific order or customer data.\n' +
+    `\n## Order Display Rules:\n` +
+    `When presenting order status, use the ${useArabic ? 'label_ar' : 'label_en'} field. ` +
     'Never show raw status keys, internal IDs, or employee names. ' +
     'Always list every sub-order with its own status. ' +
     'If summary.mixedStatuses is true, state it explicitly. ' +
