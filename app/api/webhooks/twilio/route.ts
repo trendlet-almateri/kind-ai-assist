@@ -34,6 +34,7 @@ export const maxDuration = 30
 
 import { getSupabaseAdminClient } from '@/server/supabase/admin'
 import { generateAndSendReply } from '@/server/ai/replyEngine'
+import { normalizePhone } from '@/lib/phone'
 import {
   sendTwilioWhatsAppMessage,
   verifyTwilioSignature,
@@ -103,7 +104,10 @@ export async function POST(req: NextRequest) {
     return new NextResponse('', { status: 200 })
   }
 
-  const fromPhone = stripWhatsAppPrefix(fromRaw)
+  // Canonicalize the sender to E.164 (+...) so a number always maps to one
+  // conversation regardless of formatting. toPhone is just logged, so the raw
+  // stripped value is fine there.
+  const fromPhone = normalizePhone(fromRaw) ?? stripWhatsAppPrefix(fromRaw)
   const toPhone = stripWhatsAppPrefix(toRaw)
 
   // Await processing rather than fire-and-forget — on Vercel serverless the
